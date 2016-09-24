@@ -130,7 +130,8 @@ class IRCConnection:
                 self.__receive_queue.put(line.rstrip())
 
     def add_received_msg(self, msg):
-        full_msg = (":{0}!{0}@{0}.tmi.twitch.tv PRIVMSG #{1} :{2}".format(self.config["connection"]["nick_name"], self.__active_channel, msg))
+        full_msg = (":{0}!{0}@{0}.tmi.twitch.tv PRIVMSG #{1} :{2}"
+                    .format(self.config["connection"]["nick_name"], self.__active_channel, msg))
         self.__receive_queue.put(full_msg)
 
     def __process_routine(self):
@@ -202,6 +203,7 @@ class IRCConnection:
 
 
 if __name__ == '__main__':
+    # changing windows cmd to utf-8os
     os.system("chcp 65001")
     con = IRCConnection(cfg.config)
     con.load_plugins()
