@@ -18,7 +18,7 @@ config = {
         "receive_size_bytes": 4096,
         "auto_reconnect": True,
         "membership_messages": True,
-        "tags": False,
+        "tags": True,
         "commands": True
     },
     "general": {

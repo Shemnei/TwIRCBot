@@ -27,7 +27,7 @@ class IRCPlugin(master.Plugin):
         self.plugins = None
 
     def get_regex(self):
-        return r":\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!help"
+        return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!help"
 
     def cmd(self, line):
         plugin = re.sub(self.get_regex(), "", line).strip()

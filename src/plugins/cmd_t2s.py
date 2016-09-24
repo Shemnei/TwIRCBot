@@ -14,7 +14,7 @@ class IRCPlugin(master.Plugin):
         self.mp3_path = os.path.join(os.path.dirname(__file__), "t2s.mp3")
 
     def get_regex(self):
-        return r":\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!t2s"
+        return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!t2s"
 
     def cmd(self, line):
         line = re.sub(self.get_regex(), "", line)

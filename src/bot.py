@@ -6,6 +6,8 @@ import threading
 import time
 from importlib import util
 
+import collections
+
 import cfg
 import master
 
@@ -67,7 +69,7 @@ class IRCConnection:
         files = filter(lambda f: f.endswith('.py'), os.listdir(path))
         modules = []
         for file in files:
-            spec = util.spec_from_file_location(file[:-3], os.path.join(self.config["paths"]["plugin_dir"], file)) # [:3] cutting .py
+            spec = util.spec_from_file_location(file[:-3], os.path.join(self.config["paths"]["plugin_dir"], file))
             module = util.module_from_spec(spec)
             spec.loader.exec_module(module)
             modules.append(module)
@@ -108,7 +110,8 @@ class IRCConnection:
     def __receive_routine(self):
         buffer = ""
         while self.__running:
-            buffer = "".join((buffer, self.__irc_socket.recv(self.config["connection"]["receive_size_bytes"]).decode(self.config["connection"]["msg_decoding"])))
+            buffer = "".join((buffer, self.__irc_socket.recv(self.config["connection"]["receive_size_bytes"])
+                              .decode(self.config["connection"]["msg_decoding"])))
 
             if len(buffer) == 0:
                 print("CONNECTION LOST")
@@ -201,18 +204,250 @@ class IRCConnection:
     def nr_loaded_plugins(self):
         return len(self.__plugins)
 
+    # TODO: MOVE
+    class TagCompound:
+        def __init__(self, tag_str):
+            self.tag_str = tag_str
+            self.tag_str = self.tag_str.lstrip('@')
+            self.tag_str += " "
+
+            self.tags = {}
+
+        def get_badges(self):
+            if "badges" not in self.tags.keys():
+                badges = re.search(r"badges=([\w_,\/]*)[; ]", self.tag_str)
+                if badges:
+                    badges = (badges.group(1) or "").split(",")
+                self.tags["badges"] = badges
+                return badges
+            return self.tags["badges"]
+
+        def get_color(self):
+            if "color" not in self.tags.keys():
+                color = re.search(r"color=(#[\da-fA-F]{6})?[; ]", self.tag_str)
+                if color:
+                    color = color.group(1)
+                self.tags["color"] = color
+                return color
+            return self.tags["color"]
+
+        def get_displayname(self):
+            if "display-name" not in self.tags.keys():
+                display_name = re.search(r"display-name=([a-zA-Z0-9_]*)[; ]", self.tag_str)
+                if display_name:
+                    display_name = display_name.group(1)
+                self.tags["display-name"] = display_name
+                return display_name
+            return self.tags["display-name"]
+
+        def get_emotes(self):
+            if "emotes" not in self.tags.keys():
+                emotes = re.search(r"emotes=([\d:\/,-]*)[; ]", self.tag_str)
+                if emotes:
+                    emotes = (emotes.group(1) or "").split("/")
+                self.tags["emotes"] = emotes
+                return emotes
+            return self.tags["emotes"]
+
+        def get_id(self):
+            if "id" not in self.tags.keys():
+                m_id = re.search(r";id=([\w\d-]*)[; ]", self.tag_str)
+                if m_id:
+                    m_id = m_id.group(1)
+                self.tags["id"] = m_id
+                return m_id
+            return self.tags["id"]
+
+        def get_mod(self):
+            if "mod" not in self.tags.keys():
+                mod = re.search(r"mod=(0|1)?[; ]", self.tag_str)
+                if mod:
+                    mod = mod.group(1) or "0"
+                self.tags["mod"] = mod
+                return mod
+            return self.tags["mod"]
+
+        def get_subscriber(self):
+            if "subscriber" not in self.tags.keys():
+                subscriber = re.search(r"subscriber=(0|1)?[; ]", self.tag_str)
+                if subscriber:
+                    subscriber = subscriber.group(1) or "0"
+                self.tags["subscriber"] = subscriber
+                return subscriber
+            return self.tags["subscriber"]
+
+        def get_turbo(self):
+            if "turbo" not in self.tags.keys():
+                turbo = re.search(r"turbo=(0|1)?[; ]", self.tag_str)
+                if turbo:
+                    turbo = turbo.group(1) or "0"
+                self.tags["turbo"] = turbo
+                return turbo
+            return self.tags["turbo"]
+
+        def get_roomid(self):
+            if "room-id" not in self.tags.keys():
+                room_id = re.search(r"room-id=(\d*)[; ]", self.tag_str)
+                if room_id:
+                    room_id = room_id.group(1)
+                self.tags["room-id"] = room_id
+                return room_id
+            return self.tags["room-id"]
+
+        def get_userid(self):
+            if "user-id" not in self.tags.keys():
+                user_id = re.search(r"user-id=(\d*)[; ]", self.tag_str)
+                if user_id:
+                    user_id = user_id.group(1)
+                self.tags["user-id"] = user_id
+                return user_id
+            return self.tags["user-id"]
+
+        def get_usertype(self):
+            if "user-type" not in self.tags.keys():
+                user_type = re.search(r"user-type=([\w_]*)[; ]", self.tag_str)
+                if user_type:
+                    user_type = (user_type.group(1) or "").split(",")
+                self.tags["user-type"] = user_type
+                return user_type
+            return self.tags["user-type"]
+
+        def get_bits(self):
+            if "bits" not in self.tags.keys():
+                bits = re.search(r"bits=([\d]*)[; ]", self.tag_str)
+                if bits:
+                    bits = bits.group(1)
+                self.tags["bits"] = bits
+                return bits
+            return self.tags["bits"]
+
+        def get_sentts(self):
+            if "sent-ts" not in self.tags.keys():
+                sent_ts = re.search(r"sent-ts=([\d]*)[; ]", self.tag_str)
+                if sent_ts:
+                    sent_ts = sent_ts.group(1)
+                self.tags["sent-ts"] = sent_ts
+                return sent_ts
+            return self.tags["sent-ts"]
+
+        def get_tmisentts(self):
+            if "tmi-sent-ts" not in self.tags.keys():
+                tmi_sent_ts = re.search(r"tmi-sent-ts=([\d]*)[; ]", self.tag_str)
+                if tmi_sent_ts:
+                    tmi_sent_ts = tmi_sent_ts.group(1)
+                self.tags["tmi-sent-ts"] = tmi_sent_ts
+                return tmi_sent_ts
+            return self.tags["tmi-sent-ts"]
+
+        def get_emotesets(self):
+            if "emote-sets" not in self.tags.keys():
+                emote_sets = re.search(r"emote-sets=([\d,]*)[; ]", self.tag_str)
+                if emote_sets:
+                    emote_sets = (emote_sets.group(1) or "").split(",")
+                self.tags["emote-sets"] = emote_sets
+                return emote_sets
+            return self.tags["emote-sets"]
+
+        def get_broadcasterlang(self):
+            if "broadcaster-lang" not in self.tags.keys():
+                broadcaster_lang = re.search(r"broadcaster-lang=([\w-]*)[; ]", self.tag_str)
+                if broadcaster_lang:
+                    broadcaster_lang = broadcaster_lang.group(1)
+                self.tags["broadcaster-lang"] = broadcaster_lang
+                return broadcaster_lang
+            return self.tags["broadcaster-lang"]
+
+        def get_r9k(self):
+            if "r9k" not in self.tags.keys():
+                r9k = re.search(r"r9k=(0|1)?[; ]", self.tag_str)
+                if r9k:
+                    r9k = r9k.group(1)
+                self.tags["r9k"] = r9k
+                return r9k
+            return self.tags["r9k"]
+
+        def get_subsonly(self):
+            if "subs-only" not in self.tags.keys():
+                subs_only = re.search(r"subs-only=(0|1)?[; ]", self.tag_str)
+                if subs_only:
+                    subs_only = subs_only.group(1)
+                self.tags["subs-only"] = subs_only
+                return subs_only
+            return self.tags["subs-only"]
+
+        def get_slow(self):
+            if "slow" not in self.tags.keys():
+                slow = re.search(r"slow=(\d*)[; ]", self.tag_str)
+                if slow:
+                    slow = slow.group(1)
+                self.tags["slow"] = slow
+                return slow
+            return self.tags["slow"]
+
+        def get_msgid(self):
+            if "msg-id" not in self.tags.keys():
+                msg_id = re.search(r"msg-id=(\w*)[; ]", self.tag_str)
+                if msg_id:
+                    msg_id = msg_id.group(1)
+                self.tags["msg-id"] = msg_id
+                return msg_id
+            return self.tags["msg-id"]
+
+        def get_msgparammonths(self):
+            if "msg-param-months" not in self.tags.keys():
+                msg_param_months = re.search(r"msg-param-months=(\d*)[; ]", self.tag_str)
+                if msg_param_months:
+                    msg_param_months = msg_param_months.group(1)
+                self.tags["msg-param-months"] = msg_param_months
+                return msg_param_months
+            return self.tags["msg-param-months"]
+
+        def get_systemmsg(self):
+            if "system-msg" not in self.tags.keys():
+                system_msg = re.search(r"system-msg=(.[^; ]*)[; ]", self.tag_str)
+                if system_msg:
+                    system_msg = system_msg.group(1)
+                self.tags["system-msg"] = system_msg
+                return system_msg
+            return self.tags["system-msg"]
+
+        def get_login(self):
+            if "login" not in self.tags.keys():
+                login = re.search(r"login=([a-zA-Z0-9_]*)[; ]", self.tag_str)
+                if login:
+                    login = login.group(1)
+                self.tags["login"] = login
+                return login
+            return self.tags["login"]
+
+        def get_banduration(self):
+            if "ban-duration" not in self.tags.keys():
+                ban_duration = re.search(r"ban-duration=(\d*)[; ]", self.tag_str)
+                if ban_duration:
+                    ban_duration = ban_duration.group(1)
+                self.tags["ban-duration"] = ban_duration
+                return ban_duration
+            return self.tags["ban-duration"]
+
+        def get_banreason(self):
+            if "ban-reason" not in self.tags.keys():
+                ban_reason = re.search(r"ban-reason=([a-zA-Z0-9_]*)[; ]", self.tag_str)
+                if ban_reason:
+                    ban_reason = ban_reason.group(1)
+                self.tags["ban-reason"] = ban_reason
+                return ban_reason
+            return self.tags["ban-reason"]
 
 if __name__ == '__main__':
-    # changing windows cmd to utf-8os
-    os.system("chcp 65001")
+
     con = IRCConnection(cfg.config)
     con.load_plugins()
     con.connect()
 
     # TODO find nicer solution
     while con.is_running():
-        time.sleep(5)
-
+        try:
+            time.sleep(5)
+        except KeyboardInterrupt:
+            raise
     con.close()
-
-

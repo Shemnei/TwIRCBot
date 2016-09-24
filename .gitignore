@@ -4,4 +4,4 @@ src/__pycache__/
 src/cfg_c.py
 src/users.db
 *.txt
-todo.txt
+src/test.py

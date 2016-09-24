@@ -10,7 +10,7 @@ class IRCPlugin(master.Plugin):
     command = ".timeout %s 60"
 
     def get_regex(self):
-        return r":\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :"
+        return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :"
 
     def cmd(self, line):
         user = re.search(r":\w+!", line)

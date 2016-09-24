@@ -6,7 +6,7 @@ import master
 class IRCPlugin(master.Plugin):
 
     def get_regex(self):
-        return r":\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!changec"
+        return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!changec"
 
     def cmd(self, line):
         channel = re.sub(self.get_regex(), "", line).strip()

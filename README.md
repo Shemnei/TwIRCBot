@@ -2,14 +2,20 @@ Highly modular Twitch Bot
 =========================
 
 STATUS: WORKING / IN DEVELOPMENT
-________________________________
+
 
 Readme coming soon for now look into /src/plugins for example usage
 
-NYI:
+To start the bot run `/src/bot.py`
+You need to change `nick_name` and `oauth_token` from `/src/cfg.py` to your account [OAuth Generator](http://twitchapps.com/tmi/)
+
+------
+
+TODO:
+
 
 - database for users (for keeping track of permission_level or points etc...)
-- tag parsing for default plugins
+- (&#2714) tag parsing for default plugins
 - cfg -> silent_in_other_channels
 - cfg -> lang_t2s
 - cfg -> load_plugins

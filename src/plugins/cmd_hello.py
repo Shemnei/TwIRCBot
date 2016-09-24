@@ -8,7 +8,7 @@ import master
 class IRCPlugin(master.Plugin):
 
     def get_regex(self):
-        return r":\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!hello"
+        return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!hello"
 
     def cmd(self, line):
         user = re.search(r":\w+!", line)
