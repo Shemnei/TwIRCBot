@@ -1,0 +1,7 @@
+src/__pycache__/
+.idea/
+*.py[cod]
+src/cfg_c.py
+src/users.db
+*.txt
+todo.txt
