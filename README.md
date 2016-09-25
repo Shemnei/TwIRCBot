@@ -15,7 +15,7 @@ TODO:
 
 
 - database for users (for keeping track of permission_level or points etc...)
-- &#2714; tag parsing for default plugins
+- &#2713; tag parsing for default plugins
 - cfg -> silent_in_other_channels
 - cfg -> lang_t2s
 - cfg -> load_plugins
