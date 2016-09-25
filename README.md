@@ -23,6 +23,8 @@ TODO:
 - cfg -> custom_load_order
 - cfg -> disabled_plugins
 
+test
+
 Errors:
     -> Windows CMD Encoding: if UnicodeEncodeError ->
         - Set cmd font to font supporting utf-8 and type chcp 65001(changing cmd codec to utf-8) into cmd before running bot
