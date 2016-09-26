@@ -406,7 +406,8 @@ class IRCConnection:
             if "system-msg" not in self.tags.keys():
                 system_msg = re.search(r"system-msg=(.[^; ]*)[; ]", self.tag_str)
                 if system_msg:
-                    system_msg = system_msg.group(1)
+                    system_msg = (system_msg.group(1) or "").replace("\s", " ")
+                    print(system_msg)
                 self.tags["system-msg"] = system_msg
                 return system_msg
             return self.tags["system-msg"]
@@ -431,9 +432,9 @@ class IRCConnection:
 
         def get_banreason(self):
             if "ban-reason" not in self.tags.keys():
-                ban_reason = re.search(r"ban-reason=([a-zA-Z0-9_]*)[; ]", self.tag_str)
+                ban_reason = re.search(r"ban-reason=(.[^; ]*)[; ]", self.tag_str)
                 if ban_reason:
-                    ban_reason = ban_reason.group(1)
+                    ban_reason = (ban_reason.group(1) or "").replace("\s", " ")
                 self.tags["ban-reason"] = ban_reason
                 return ban_reason
             return self.tags["ban-reason"]

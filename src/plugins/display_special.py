@@ -70,7 +70,7 @@ class IRCPlugin(master.Plugin):
         elif command == "USERNOTICE":
             if tag_cmp:
                 if tag_cmp.get_systemmsg:
-                    print_tm("SERVER: " + tag_cmp.get_systemmsg)
+                    print_tm("SERVER: " + tag_cmp.get_systemmsg())
                     return
             print_tm("SERVER: SUB/RESUB")
             return

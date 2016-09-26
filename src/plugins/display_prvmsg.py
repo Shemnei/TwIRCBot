@@ -31,7 +31,7 @@ class IRCPlugin(master.Plugin):
             if tag_cmp.get_turbo() == "1":
                 tmp += "T/"
             if tag_cmp.get_bits():
-                tmp += tag_cmp.bits
+                tmp += tag_cmp.bits()
             tmp = tmp.strip("/")
             title = "| (%s) " % tmp
             if tag_cmp.get_displayname():
