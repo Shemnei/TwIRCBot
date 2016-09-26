@@ -469,5 +469,5 @@ if __name__ == '__main__':
         try:
             time.sleep(5)
         except KeyboardInterrupt:
-            raise KeyboardInterrupt
+            con.close()
     con.close()
