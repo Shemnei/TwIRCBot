@@ -4,10 +4,10 @@ import master
 
 
 class IRCPlugin(master.Plugin):
-    url_regex = [r"((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[.\!\/\\w]*))?)",
+    url_regex = [r"(https?://)?(www\.)?.*\.\w{2,6}",
                  r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"]
     message = "Links are not permitted %s => timeout"
-    command = ".timeout %s 60"
+    command = ".timeout %s 60 No urls permitted!"
 
     def get_regex(self):
         return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :"

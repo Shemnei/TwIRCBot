@@ -116,4 +116,5 @@ class IRCPlugin(master.Plugin):
 
 
 def print_tm(msg):
-    print("[" + datetime.datetime.now().strftime("%H:%M:%S") + "] " + msg)
+    # FIXME: Colors are tmp
+    print("[" + datetime.datetime.now().strftime("%H:%M:%S") + "] \033[37m" + msg + "\033[0m")

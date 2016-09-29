@@ -10,7 +10,7 @@ class IRCPlugin(master.Plugin):
 
     def cmd(self, line):
         channel = re.sub(self.get_regex(), "", line).strip()
-        match = re.search(r"^([a-zA-Z0-9_]+)$", channel)
+        match = re.search(r"^(\w+)$", channel)
         if match:
             print(self.connection.Color.GREEN + "DEBUG: CHANGING CHANNELS" + self.connection.Color.RESET)
             self.connection.join_channel(match.group().lower())

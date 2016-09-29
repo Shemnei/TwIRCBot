@@ -92,6 +92,7 @@ class IRCConnection:
             try:
                 msg = self.__send_queue.get(timeout=5)
                 if msg is not None and msg != "":
+                    # FIXME: ConnectionResetError -> Reconnect
                     self.__irc_socket.send((msg + "\r\n").encode(self.config["connection"]["msg_encoding"]))
                     # TODO change sleep time depending on mod or not and add settings
                     time.sleep(self.config["connection"]["timeout_between_msg"])
@@ -233,7 +234,7 @@ class IRCConnection:
 
         def get_badges(self):
             if "badges" not in self.tags.keys():
-                badges = re.search(r"badges=([\w_,\/]*)[; ]", self.tag_str)
+                badges = re.search(r"badges=([\w,\/]*)[; ]", self.tag_str)
                 if badges:
                     badges = (badges.group(1) or "").split(",")
                 self.tags["badges"] = badges
@@ -251,7 +252,7 @@ class IRCConnection:
 
         def get_displayname(self):
             if "display-name" not in self.tags.keys():
-                display_name = re.search(r"display-name=([a-zA-Z0-9_]*)[; ]", self.tag_str)
+                display_name = re.search(r"display-name=(\w*)[; ]", self.tag_str)
                 if display_name:
                     display_name = display_name.group(1)
                 self.tags["display-name"] = display_name
@@ -269,7 +270,7 @@ class IRCConnection:
 
         def get_id(self):
             if "id" not in self.tags.keys():
-                m_id = re.search(r";id=([\w\d-]*)[; ]", self.tag_str)
+                m_id = re.search(r";id=([\w-]*)[; ]", self.tag_str)
                 if m_id:
                     m_id = m_id.group(1)
                 self.tags["id"] = m_id
@@ -323,7 +324,7 @@ class IRCConnection:
 
         def get_usertype(self):
             if "user-type" not in self.tags.keys():
-                user_type = re.search(r"user-type=([\w_]*)[; ]", self.tag_str)
+                user_type = re.search(r"user-type=(\w*)[; ]", self.tag_str)
                 if user_type:
                     user_type = (user_type.group(1) or "").split(",")
                 self.tags["user-type"] = user_type
@@ -332,7 +333,7 @@ class IRCConnection:
 
         def get_bits(self):
             if "bits" not in self.tags.keys():
-                bits = re.search(r"bits=([\d]*)[; ]", self.tag_str)
+                bits = re.search(r"bits=(\d*)[; ]", self.tag_str)
                 if bits:
                     bits = bits.group(1)
                 self.tags["bits"] = bits
@@ -341,7 +342,7 @@ class IRCConnection:
 
         def get_sentts(self):
             if "sent-ts" not in self.tags.keys():
-                sent_ts = re.search(r"sent-ts=([\d]*)[; ]", self.tag_str)
+                sent_ts = re.search(r"sent-ts=(\d*)[; ]", self.tag_str)
                 if sent_ts:
                     sent_ts = sent_ts.group(1)
                 self.tags["sent-ts"] = sent_ts
@@ -350,7 +351,7 @@ class IRCConnection:
 
         def get_tmisentts(self):
             if "tmi-sent-ts" not in self.tags.keys():
-                tmi_sent_ts = re.search(r"tmi-sent-ts=([\d]*)[; ]", self.tag_str)
+                tmi_sent_ts = re.search(r"tmi-sent-ts=(\d*)[; ]", self.tag_str)
                 if tmi_sent_ts:
                     tmi_sent_ts = tmi_sent_ts.group(1)
                 self.tags["tmi-sent-ts"] = tmi_sent_ts
@@ -432,7 +433,7 @@ class IRCConnection:
 
         def get_login(self):
             if "login" not in self.tags.keys():
-                login = re.search(r"login=([a-zA-Z0-9_]*)[; ]", self.tag_str)
+                login = re.search(r"login=(\w*)[; ]", self.tag_str)
                 if login:
                     login = login.group(1)
                 self.tags["login"] = login
