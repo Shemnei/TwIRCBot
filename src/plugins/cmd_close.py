@@ -7,7 +7,7 @@ class IRCPlugin(master.Plugin):
         return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!close$"
 
     def cmd(self, line):
-        self.connection.shutdown()
+        self.bot.stop()
 
     def get_description(self):
         return "!close - Terminates bot"

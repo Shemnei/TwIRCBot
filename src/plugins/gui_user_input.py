@@ -1,8 +1,7 @@
-from idlelib import ToolTip
-import tkinter
 import threading
+import tkinter
+from idlelib import ToolTip
 from tkinter import messagebox
-import sys
 
 import master
 
@@ -21,18 +20,18 @@ class IRCPlugin(master.Plugin):
     def cmd(self, line):
         pass
 
-    def on_load(self, connection):
-        super().on_load(connection)
+    def on_load(self, bot):
+        super().on_load(bot)
         input_thread = threading.Thread(name="user_input_thread", target=self.open_gui)
         input_thread.setDaemon(True)
         input_thread.start()
 
     def on_channel_change(self, new_channel):
-        self.gui_root.wm_title("TwIRC - CMD-P [Active plugins: %i] / [%s]" % (self.connection.nr_loaded_plugins(), new_channel))
+        self.gui_root.wm_title("TwIRC - [Active plugins: %i/%s]" % (len(self.plugin_manager.loaded_plugins), new_channel))
 
     def open_gui(self):
         root = tkinter.Tk()
-        root.wm_title("TwIRC - CMD-P [Active plugins: %i]" % self.connection.nr_loaded_plugins())
+        root.wm_title("TwIRC - [Active plugins: %i]" % len(self.plugin_manager.loaded_plugins))
         root.resizable(0, 0)
         root.bind("<Return>", self.handle_button)
         root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -64,7 +63,7 @@ class IRCPlugin(master.Plugin):
         msg = self.message_field.get()
         cmd = self.command_field.get()
         if msg:
-            self.connection.add_chat_msg(msg)
+            self.connection.add_raw_msg(msg)
             self.message_field.delete(0, tkinter.END)
         if cmd:
             self.connection.add_received_msg(cmd)

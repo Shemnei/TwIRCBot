@@ -1,9 +1,4 @@
-import importlib
-import inspect
 import os
-
-import sys
-
 import re
 
 import master
@@ -54,12 +49,12 @@ class IRCPlugin(master.Plugin):
         else:
             self.connection.add_chat_msg(using["none_found"] % plugin)
 
-    def on_load(self, connection):
-        super().on_load(connection)
-        self.plugins = self.connection.get_loaded_plugins()
+    def on_load(self, bot):
+        super().on_load(bot)
+        self.plugins = self.plugin_manager.loaded_plugins
 
     def on_refresh(self):
-        self.plugins = self.connection.get_loaded_plugins()
+        self.plugins = self.plugin_manager.loaded_plugins
 
     def get_description(self):
         return "!help (command) - Gives info about all loaded commands or a specific one"

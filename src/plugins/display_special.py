@@ -1,7 +1,5 @@
 import datetime
 
-import re
-
 import master
 
 
@@ -23,8 +21,8 @@ class IRCPlugin(master.Plugin):
         disp_name = None
         if line.startswith('@'):
             offset = 1
-            tag_cmp = self.connection.TagCompound(parts[0])
-            disp_name = tag_cmp.get_displayname()
+            tag_cmp = self.connection.parse_tags(parts[0])
+            disp_name = tag_cmp.get("display-name", None)
 
         sender = parts[0 + offset]
         command = parts[1 + offset]
@@ -33,15 +31,15 @@ class IRCPlugin(master.Plugin):
             return
         elif command == "ROOMSTATE":
             if tag_cmp:
-                if tag_cmp.get_slow():
-                    print_tm("SERVER: Channel is slow mode [%ss]" % tag_cmp.get_slow())
-                if tag_cmp.get_r9k():
-                    if tag_cmp.get_r9k() == '1':
+                if tag_cmp.get("slow", None):
+                    print_tm("SERVER: Channel is slow mode [%ss]" % tag_cmp["slow"])
+                if tag_cmp.get("r9k", None):
+                    if tag_cmp["r9k"] == '1':
                         print_tm("SERVER: Channel has r9k active")
                     else:
                         print_tm("SERVER: Channel has no r9k")
-                if tag_cmp.get_subsonly():
-                    if tag_cmp.get_r9k() == '1':
+                if tag_cmp.get("subsonly", None):
+                    if tag_cmp["subsonly"] == '1':
                         print_tm("SERVER: Channel is in sub only mode")
                     else:
                         print_tm("SERVER: Channel is no longer in sub only mode")
@@ -69,8 +67,8 @@ class IRCPlugin(master.Plugin):
             return
         elif command == "USERNOTICE":
             if tag_cmp:
-                if tag_cmp.get_systemmsg:
-                    print_tm("SERVER: " + tag_cmp.get_systemmsg())
+                if tag_cmp.get("systemmsg", None):
+                    print_tm("SERVER: " + tag_cmp["systemmsg"])
                     return
             print_tm("SERVER: SUB/RESUB")
             return
@@ -85,14 +83,14 @@ class IRCPlugin(master.Plugin):
         elif command == "CLEARCHAT":
             if parts[-1].startswith(':'):
                 if tag_cmp:
-                    if tag_cmp.get_banduration():
+                    if tag_cmp.get("banduration", None):
                         print_tm("SERVER: %s timed out [%ss/%s]" % (disp_name or parts[3 + offset].lstrip(":"),
-                                                                    tag_cmp.get_banduration(),
-                                                                    tag_cmp.get_banreason() or ""))
+                                                                    tag_cmp["banduration"],
+                                                                    tag_cmp.get("banreason", "").replace("\s", " ")))
                         return
                     else:
                         print_tm("SERVER: %s banned [%s]" % (disp_name or parts[3 + offset].lstrip(":"),
-                                                             tag_cmp.get_banreason() or ""))
+                                                             tag_cmp.get("banreason", "").replace("\s", " ")))
                         return
                 else:
                     print_tm("SERVER: %s timeout or banned" % (disp_name or parts[3 + offset].lstrip(":")))

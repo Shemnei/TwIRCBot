@@ -9,10 +9,6 @@ class IRCPlugin(master.Plugin):
     def cmd(self, line):
         self.connection.add_chat_msg("PONG")
 
-    def on_load(self, connection):
-        super().on_load(connection)
-        print("EXAMPLE LOADED")
-
     def on_refresh(self):
         print("Custom Refresh")
 

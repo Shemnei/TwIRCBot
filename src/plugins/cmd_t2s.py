@@ -1,8 +1,7 @@
 import os
-import subprocess
+import re
 
 import gtts
-import re
 
 import master
 

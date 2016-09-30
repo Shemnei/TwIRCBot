@@ -1,10 +1,9 @@
-import inspect
-
-
 class Plugin:
 
     def __init__(self):
+        self.bot = None
         self.connection = None
+        self.plugin_manager = None
 
     def get_regex(self):
         """
@@ -20,9 +19,11 @@ class Plugin:
         """
         pass
 
-    def on_load(self, connection):
+    def on_load(self, bot):
         """Called once when the bot first loads the plugin"""
-        self.connection = connection
+        self.bot = bot
+        self.plugin_manager = bot.get_plugin_manager()
+        self.connection = bot.get_connection()
         print("Plugin %s loaded" % self.__module__)
 
     def on_refresh(self):

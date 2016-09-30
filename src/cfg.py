@@ -34,5 +34,20 @@ config = {
         "disable_cmd_execution": False,         # <- if on only cmd are being disabled
         "custom_load_order": [],
         "disabled_plugins": None,
+    },
+    "cron": {
+        "cron_job_one": {
+            "enabled": True,
+            "channel": "own_channel",
+            "interval": 10,                     # <- in sec
+            "message": "Hello i am cron job one"
+        },
+        "cron_job_two": {
+            "enabled": True,
+            "ignore_silent_mode": False,
+            "channel": "own_channel",
+            "interval": 30,                     # <- in sec
+            "message": "Hello i am cron job two"
+        },
     }
 }
