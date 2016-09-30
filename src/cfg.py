@@ -7,7 +7,8 @@ config = {
     },
     "connection": {
         "server": "irc.chat.twitch.tv",
-        "port": 6667,
+        "port": 443,                           # <- 6667 normal, 443 ssl
+        "ssl": True,
         "nick_name": cfg_c.USER,
         "oauth_token": cfg_c.OAUTH,
         "channel": "lirik",

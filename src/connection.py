@@ -1,6 +1,7 @@
 import queue
 import re
 import socket
+import ssl
 import threading
 import time
 
@@ -26,7 +27,13 @@ class IRCConnection:
         self.__plugin_manager = self.__bot.get_plugin_manager()
         start_connect = time.time()
 
-        self.__irc_socket = socket.socket()
+        tmp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        if self.__config["connection"]["ssl"]:
+            self.__irc_socket = ssl.wrap_socket(tmp)
+        else:
+            self.__irc_socket = tmp
+
         self.__irc_socket.connect((self.__config["connection"]["server"], self.__config["connection"]["port"]))
         print("DEBUG: Connected to %s on %i" % (self.__config["connection"]["server"], self.__config["connection"]["port"]))
         if not self.__send_thread.is_alive():

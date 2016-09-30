@@ -18,10 +18,7 @@ class CronTask(threading.Thread):
 
     def __init__(self, bot):
         super().__init__()
-        # need to store interval last_executed and job
-        # maybe during load find shortest interval and set sleep timer to it
-        # and each time subtract that from others
-        # if no jobs pass run()
+
         self.__config_manager = bot.get_config_manager()
         self.__connection = bot.get_connection()
 
@@ -35,7 +32,6 @@ class CronTask(threading.Thread):
         super().__init__(target=self.__cron_routine, name="cron_thread")
 
     def load_cron_jobs(self):
-        # maybe stop execution for that
         intervals = []
         for job in self.__config_manager["cron"].values():
             self.__cron_jobs.append(CronJob(job["interval"], job["channel"], job["message"], job.get("ignore_silent_mode", False)))
@@ -50,8 +46,10 @@ class CronTask(threading.Thread):
                 smallest_interval = math.gcd(smallest_interval, i)
 
         self.__max_sleep_time = smallest_interval
+        print("DEBUG: Cron sleep time set to %is" % self.__max_sleep_time)
 
     def reload_jobs(self):
+        # prob. stop execution for that
         # maybe without stopping existing ones
         self.load_cron_jobs()
         self.start()
