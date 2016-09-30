@@ -5,3 +5,4 @@ src/cfg_c.py
 src/users.db
 *.txt
 src/test.py
+!requirements.txt
