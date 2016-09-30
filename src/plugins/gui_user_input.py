@@ -23,10 +23,10 @@ class IRCPlugin(master.Plugin):
         self.message_index = 0
 
     def get_regex(self):
-        return r"$ä"
+        return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!show_gui$"
 
     def cmd(self, line):
-        pass
+        self.gui_root.deiconify()
 
     def on_load(self, bot):
         super().on_load(bot)
@@ -70,8 +70,8 @@ class IRCPlugin(master.Plugin):
         tkinter.mainloop()
 
     def on_closing(selt):
-        if tkinter.messagebox.askokcancel("Quit", "Do you want to quit?"):
-            selt.gui_root.destroy()
+        if tkinter.messagebox.askokcancel("Quit", "Do you want to hide the GUI ?"):
+            selt.gui_root.withdraw()
 
     def msg_handle_return(self, event=None):
         msg = self.message_field.get()
