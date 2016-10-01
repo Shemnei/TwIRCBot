@@ -32,9 +32,9 @@ config = {
     "plugins": {
         # TODO Implement stuff below
         "load_plugins": True,
-        "disable_cmd_execution": False,         # <- if on only cmd are being disabled
+        "disable_cmd_execution": False,         # <- if on only cmd are being disabled, but do i need it ?
         "custom_load_order": [],
-        "disabled_plugins": None,
+        "disabled_plugins": [],
     },
     "cron": {
         "cron_job_one": {

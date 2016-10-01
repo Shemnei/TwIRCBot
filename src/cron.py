@@ -14,7 +14,7 @@ class CronJob:
         return "PRIVMSG #%s :%s" % (self.channel, self.message)
 
 
-class CronTask(threading.Thread):
+class CronTask:
 
     def __init__(self, bot):
         super().__init__()
@@ -23,19 +23,23 @@ class CronTask(threading.Thread):
         self.__connection = bot.get_connection()
 
         self.__max_sleep_time = None
-        self.__cron_jobs = []
+        self.__cron_jobs = None
         self.__loaded_cron_cfg = None
         self.__running = False
+        self.__cron_thread = None
 
         self.__running_flag = False
         self.stop = threading.Event()
-        super().__init__(target=self.__cron_routine, name="cron_thread")
 
     def load_cron_jobs(self):
+        self.__cron_jobs = []
+        self.__max_sleep_time = None
+
         intervals = []
         for job in self.__config_manager["cron"].values():
-            self.__cron_jobs.append(CronJob(job["interval"], job["channel"], job["message"], job.get("ignore_silent_mode", False)))
-            intervals.append(job["interval"])
+            if job["enabled"]:
+                self.__cron_jobs.append(CronJob(job["interval"], job["channel"], job["message"], job.get("ignore_silent_mode", False)))
+                intervals.append(job["interval"])
         self.__cron_jobs.sort(key=lambda x: x.interval)
 
         smallest_interval = 0
@@ -49,13 +53,20 @@ class CronTask(threading.Thread):
         print("DEBUG: Cron sleep time set to %is" % self.__max_sleep_time)
 
     def reload_jobs(self):
-        # prob. stop execution for that
-        # maybe without stopping existing ones
+        print("DEBUG: Cron jobs reloading")
         self.load_cron_jobs()
-        self.start()
+        if self.__cron_thread and not self.__cron_thread.is_alive():
+            self.start()
+
+    def start(self):
+        print("DEBUG: Cron starting")
+        self.__cron_thread = threading.Thread(target=self.__cron_routine, name="cron_thread")
+        self.__cron_thread.start()
 
     def __cron_routine(self):
-        # don't start when jobs empty or all disabled
+        if not self.__cron_jobs or len(self.__cron_jobs) == 0:
+            print("\033[34;1m{" + datetime.datetime.now().strftime("%H:%M:%S") + "} Cron stopped [no jobs]\033[0m")
+            return
         time_slept = 0
         try:
             while not self.stop.wait(1):
@@ -74,4 +85,4 @@ class CronTask(threading.Thread):
     def close(self):
         print("DEBUG: Cron closing")
         self.stop.set()
-        self.join()
+        self.__cron_thread.join()
