@@ -30,11 +30,10 @@ config = {
         "lang_t2s": 'en'
     },
     "plugins": {
-        # TODO Implement stuff below
         "load_plugins": True,
         "disable_cmd_execution": False,         # <- if on only cmd are being disabled, but do i need it ?
-        "custom_load_order": [],
-        "disabled_plugins": [],
+        "custom_load_order": ["gui_user_input"],   # <- loads those plugins in order first then the others found
+        "disabled_plugins": ["display_raw", "cmd_example"],
     },
     "cron": {
         "cron_job_one": {

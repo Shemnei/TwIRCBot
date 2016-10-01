@@ -24,7 +24,7 @@ class Plugin:
         self.bot = bot
         self.plugin_manager = bot.get_plugin_manager()
         self.connection = bot.get_connection()
-        print("Plugin %s loaded" % self.__module__)
+        print("+Plugin %s loaded" % self.__module__)
 
     def on_refresh(self):
         """Called every time the bot refreshes/reloads its plugins"""
