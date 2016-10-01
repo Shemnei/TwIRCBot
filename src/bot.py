@@ -29,14 +29,22 @@ class Bot:
         self.__cron_task.load_cron_jobs()
         self.__plugin_manager = managers.PluginManager(self)
         self.__plugin_manager.load_plugins()
+        self.__currency_manager = managers.CurrencyManager(self)
+        self.__currency_manager.load_settings()
 
     def start(self):
         # ansi color support for cmd
         enable_cmd_colors()
 
         self.__connection.connect()
+        self.__currency_manager.start()
         self.__cron_task.start()
         self.__running = True
+
+        time.sleep(20)
+        self.__cfg["currency"]["enabled"] = True
+        self.__currency_manager.reload_settings()
+
         while self.__running:
             try:
                 time.sleep(5)

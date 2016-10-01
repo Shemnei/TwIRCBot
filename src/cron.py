@@ -28,7 +28,6 @@ class CronTask:
         self.__running = False
         self.__cron_thread = None
 
-        self.__running_flag = False
         self.stop = threading.Event()
 
     def load_cron_jobs(self):
@@ -69,6 +68,7 @@ class CronTask:
             return
         time_slept = 0
         try:
+            self.__running = True
             while not self.stop.wait(1):
                 self.stop.wait(self.__max_sleep_time)
                 time_slept += self.__max_sleep_time
@@ -80,7 +80,7 @@ class CronTask:
                 if self.__cron_jobs[-1].interval <= time_slept:
                     time_slept = 0
         finally:
-                self.__running_flag = False
+                self.__running = False
 
     def close(self):
         print("DEBUG: Cron closing")

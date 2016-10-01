@@ -34,6 +34,13 @@ config = {
         "custom_load_order": ["gui_user_input"],    # <- loads those plugins in order first then the others found
         "disabled_plugins": ["display_raw", "cmd_example"],
     },
+    "currency": {
+        "enabled": True,
+        "channel": "lirik",
+        "interval": 60,                        # <- in sec
+        "amount": 1,
+        "message": "I'm laughing straight to the bank with this (Ha, ha ha ha ha ha, ha, ha ha ha ha ha)"
+    },
     "cron": {
         "cron_job_one": {
             "enabled": True,
