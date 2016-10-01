@@ -14,7 +14,6 @@ config = {
         "channel": "lirik",
         "msg_decoding": "utf-8",
         "msg_encoding": "utf-8",
-        "send_queue_empty_timeout": 1,
         "timeout_between_msg": (20 / 30),
         "receive_size_bytes": 4096,
         "auto_reconnect": True,
@@ -26,13 +25,13 @@ config = {
         "join_msg": ".me up and running!",
         "depart_msg": ".me battery empty, leaving!",
         "silent_mode": True,
-        "silent_in_other_channels": True,
-        "lang_t2s": 'en'
+        "silent_in_other_channels": True,       # <- todo
+        "lang_t2s": 'en'                        # <- todo
     },
     "plugins": {
         "load_plugins": True,
-        "disable_cmd_execution": False,         # <- if on only cmd are being disabled, but do i need it ?
-        "custom_load_order": ["gui_user_input"],   # <- loads those plugins in order first then the others found
+        "disable_cmd_execution": False,             # <- if on only cmd are being disabled, but do i need it ?
+        "custom_load_order": ["gui_user_input"],    # <- loads those plugins in order first then the others found
         "disabled_plugins": ["display_raw", "cmd_example"],
     },
     "cron": {

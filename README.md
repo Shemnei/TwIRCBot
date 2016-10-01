@@ -18,10 +18,10 @@ TODO:
 - ✔ tag parsing for default plugins
 - cfg -> silent_in_other_channels
 - cfg -> lang_t2s
-- cfg -> load_plugins
+- ✔ cfg -> load_plugins
 - cfg -> disable_cmd_execution
-- cfg -> custom_load_order
-- cfg -> disabled_plugins
+- ✔ cfg -> custom_load_order
+- ✔ cfg -> disabled_plugins
 
 
 Errors:
