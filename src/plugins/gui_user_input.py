@@ -3,8 +3,6 @@ import tkinter
 from idlelib import ToolTip
 from tkinter import messagebox
 
-import math
-
 import master
 
 

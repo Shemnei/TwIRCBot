@@ -5,13 +5,8 @@ import master
 
 class IRCPlugin(master.Plugin):
 
-    _active = True
-
     def get_regex(self):
-        if IRCPlugin._active:
-            return r"."
-        else:
-            return r"$ä"
+        return r"."
 
     # TODO: maybe support for notice
     def cmd(self, line):

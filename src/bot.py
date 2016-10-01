@@ -1,6 +1,6 @@
-import time
 import ctypes
 import platform
+import time
 
 import cfg
 import connection
