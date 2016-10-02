@@ -136,7 +136,6 @@ class CurrencyManager:
                 jo = json.loads(content.decode())
                 chatters = []
                 [chatters.extend(x) for x in jo["chatters"].values()]
-                print(chatters)
                 # process chatters
 
                 # end

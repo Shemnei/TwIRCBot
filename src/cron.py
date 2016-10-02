@@ -64,7 +64,7 @@ class CronTask:
 
     def __cron_routine(self):
         if not self.__cron_jobs or len(self.__cron_jobs) == 0:
-            print("\033[34;1m{" + datetime.datetime.now().strftime("%H:%M:%S") + "} Cron stopped [no jobs]\033[0m")
+            print("DEBUG: Cron stopped [no jobs]")
             return
         time_slept = 0
         try:

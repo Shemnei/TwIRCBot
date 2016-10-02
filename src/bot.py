@@ -23,6 +23,13 @@ class Bot:
     def __init__(self, config):
         self.__running = False
 
+        print(" _______     _____ _____   _____ ____        _   ")
+        print("|__   __|   |_   _|  __ \ / ____|  _ \      | |  ")
+        print("   | |_      _| | | |__) | |    | |_) | ___ | |_ ")
+        print("   | \ \ /\ / / | |  _  /| |    |  _ < / _ \| __|")
+        print("   | |\ V  V /| |_| | \ \| |____| |_) | (_) | |_ ")
+        print("   |_| \_/\_/_____|_|  \_\\\\_____|____/ \___/ \__|")
+
         self.__cfg = config
         self.__connection = connection.IRCConnection(self)
         self.__cron_task = cron.CronTask(self)
@@ -40,10 +47,6 @@ class Bot:
         self.__currency_manager.start()
         self.__cron_task.start()
         self.__running = True
-
-        time.sleep(20)
-        self.__cfg["currency"]["enabled"] = True
-        self.__currency_manager.reload_settings()
 
         while self.__running:
             try:
