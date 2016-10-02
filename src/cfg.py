@@ -11,6 +11,7 @@ config = {
         "ssl": True,
         "nick_name": cfg_c.USER,
         "oauth_token": cfg_c.OAUTH,
+        "client_id": cfg_c.CLIENT,
         "channel": "lirik",
         "msg_decoding": "utf-8",
         "msg_encoding": "utf-8",
@@ -35,7 +36,7 @@ config = {
         "disabled_plugins": ["display_raw", "cmd_example"],
     },
     "currency": {
-        "enabled": True,
+        "enabled": False,
         "channel": "lirik",
         "interval": 60,                        # <- in sec
         "amount": 1,
@@ -43,13 +44,13 @@ config = {
     },
     "cron": {
         "cron_job_one": {
-            "enabled": True,
+            "enabled": False,
             "channel": "own_channel",
             "interval": 10,                     # <- in sec
             "message": "Hello i am cron job one"
         },
         "cron_job_two": {
-            "enabled": True,
+            "enabled": False,
             "ignore_silent_mode": False,
             "channel": "own_channel",
             "interval": 30,                     # <- in sec
