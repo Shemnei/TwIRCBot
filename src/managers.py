@@ -6,11 +6,12 @@ import time
 from importlib import util
 import urllib.request
 
+import sqlite3
+
 import master
 
 
 class PluginManager:
-
     def __init__(self, bot):
         self.loaded_plugins = []
 
@@ -72,7 +73,7 @@ class PluginManager:
         for p in not_loaded:
             print("-Plugin %s not loaded -> needs to be derived from master.Plugin" % p.__module__)
 
-        print("DEBUG: Plugins Loaded in %fms" % ((time.time() - start_load_plugins)*1000))
+        print("DEBUG: Plugins Loaded in %fms" % ((time.time() - start_load_plugins) * 1000))
 
     def close(self):
         print("DEBUG: Plugin Manager closing")
@@ -91,6 +92,7 @@ class CurrencyManager:
         self.__bot = bot
         self.__config = bot.get_config_manager()
         self.__connection = bot.get_connection()
+        self.__data_manager = bot.get_data_manager()
 
         self.__enabled = None
         self.__channel = None
@@ -137,7 +139,13 @@ class CurrencyManager:
                 jo = json.loads(content.decode())
                 chatters = []
                 [chatters.extend(x) for x in jo["chatters"].values()]
-                # process chatters
+
+                # process viewer lists
+                start = time.clock()
+
+                self.__data_manager.process_chatters_list(chatters, self.__amount)
+
+                print("Debug: Currency add time: %fms" % ((time.clock() - start) * 1000))
 
                 # end
                 print("\033[34;1m{" + datetime.datetime.now().strftime("%H:%M:%S") +
@@ -151,6 +159,106 @@ class CurrencyManager:
         print("DEBUG: Currency System closing")
         self.__stop.set()
         self.__currency_thread.join()
+
+
+class DataManager:
+    DATABASE_NAME = "../users.db"
+
+    def __init__(self, bot):
+        self.__bot = bot
+        self.__config = bot.get_config_manager()
+        self.__channel = self.__config["connection"]["channel"]
+
+    def setup_database(self):
+        start = time.clock()
+        con = sqlite3.connect(DataManager.DATABASE_NAME)
+        cur = con.cursor()
+
+        cur.execute("CREATE TABLE IF NOT EXISTS " + self.__channel + " (id VARCHAR NOT NULL, perm_lvl INTEGER, currency INTEGER, PRIMARY KEY (id))")
+        con.commit()
+
+        con.close()
+        print("Debug: Database setup time: %fms" % ((time.clock() - start) * 1000))
+
+    def process_chatters_list(self, chatters, currency_amount):
+        con = sqlite3.connect(DataManager.DATABASE_NAME)
+        cur = con.cursor()
+
+        cur.execute("BEGIN TRANSACTION")
+        for user in chatters:
+            cur.execute("INSERT OR REPLACE INTO " + self.__channel + " (id, perm_lvl, currency) VALUES ("
+                        "?,"
+                        "COALESCE((SELECT perm_lvl FROM " + self.__channel + " WHERE id=?), 0),"
+                        "COALESCE((SELECT currency FROM " + self.__channel + " WHERE id=?)+?, ?))",
+                        (user, user, user, currency_amount, currency_amount))
+        con.commit()
+
+    def add_user(self, user, perm_lvl=0, currency=0):
+        con = sqlite3.connect(DataManager.DATABASE_NAME)
+        cur = con.cursor()
+        try:
+            cur.execute("INSERT INTO " + self.__channel + " (id, perm_lvl, currency) VALUES (?,?,?)", (user, perm_lvl, currency))
+            con.commit()
+        finally:
+            con.close()
+
+    def get_user_currency(self, user):
+        con = sqlite3.connect(DataManager.DATABASE_NAME)
+        cur = con.cursor()
+
+        cur.execute("INSERT OR IGNORE INTO " + self.__channel + " (id, perm_lvl, currency) VALUES (?,?,?)", (user, 0, 0))
+        cur.execute("SELECT currency FROM " + self.__channel + " WHERE users.id=?", (user,))
+        user = cur.fetchone()
+        con.commit()
+        con.close()
+        return user[0]
+
+    def set_user_currency(self, user, new_currency):
+        con = sqlite3.connect(DataManager.DATABASE_NAME)
+        cur = con.cursor()
+
+        cur.execute("INSERT OR REPLACE INTO " + self.__channel + " (id, perm_lvl, currency) VALUES ("
+                    "?,"
+                    "COALESCE((SELECT perm_lvl FROM " + self.__channel + " WHERE id=?), 0),"
+                    "?",
+                    (user, user, user, new_currency))
+        con.commit()
+        con.close()
+
+    def add_user_currency(self, user, amount):
+        con = sqlite3.connect(DataManager.DATABASE_NAME)
+        cur = con.cursor()
+
+        cur.execute("INSERT OR REPLACE INTO " + self.__channel + " (id, perm_lvl, currency) VALUES ("
+                    "?,"
+                    "COALESCE((SELECT perm_lvl FROM " + self.__channel + " WHERE id=?), 0),"
+                    "COALESCE((SELECT currency FROM " + self.__channel + " WHERE id=?)+?, ?))",
+                    (user, user, user, amount, amount))
+        con.commit()
+        con.close()
+
+    def get_user_permlvl(self, user):
+        con = sqlite3.connect(DataManager.DATABASE_NAME)
+        cur = con.cursor()
+
+        cur.execute("INSERT OR IGNORE INTO " + self.__channel + " (id, perm_lvl, currency) VALUES (?,?,?)", (user, 0, 0))
+        cur.execute("SELECT perm_lvl FROM " + self.__channel + " WHERE users.id=?", (user,))
+        user = cur.fetchone()
+        con.commit()
+        con.close()
+        return user[0]
+
+    def set_user_permlvl(self, user, new_permlvl):
+        con = sqlite3.connect(DataManager.DATABASE_NAME)
+        cur = con.cursor()
+
+        cur.execute("INSERT OR IGNORE INTO " + self.__channel + " (id, perm_lvl, currency) VALUES (?,?,?)", (user, 0, 0))
+        cur.execute("UPDATE " + self.__channel + " SET perm_lvl=? WHERE id=?", (new_permlvl, user))
+        con.commit()
+        con.close()
+
+    def close(self):
+        print("DEBUG: Data System closing")
 
 
 class ConfigManager:

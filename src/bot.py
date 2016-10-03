@@ -31,6 +31,8 @@ class Bot:
         print(r"   |_| \_/\_/_____|_|  \_\\_____|____/ \___/ \__|")
 
         self.__cfg = config
+        self.__data_manager = managers.DataManager(self)
+        self.__data_manager.setup_database()
         self.__connection = connection.IRCConnection(self)
         self.__cron_task = cron.CronTask(self)
         self.__cron_task.load_cron_jobs()
@@ -61,9 +63,13 @@ class Bot:
     def __close(self):
         print("DEBUG: Bot shutting down")
         self.__running = False
+        self.__currency_manager.close()
         self.__cron_task.close()
         self.__plugin_manager.close()
         self.__connection.close()
+
+    def get_data_manager(self):
+        return self.__data_manager
 
     def get_plugin_manager(self):
         return self.__plugin_manager

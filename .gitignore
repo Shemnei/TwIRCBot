@@ -6,3 +6,4 @@ src/users.db
 *.txt
 src/test.py
 !requirements.txt
+*.db
