@@ -4,7 +4,7 @@ import master
 class IRCPlugin(master.Plugin):
 
     def get_regex(self):
-        return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!ping"
+        return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!ping$"
 
     def cmd(self, line):
         self.connection.add_chat_msg("PONG")

@@ -106,7 +106,7 @@ class CurrencyManager:
 
     def load_settings(self):
         self.__enabled = self.__config["currency"]["enabled"]
-        self.__channel = self.__config["currency"]["channel"]
+        self.__channel = self.__config["connection"]["channel"]
         self.__interval = int(self.__config["currency"]["interval"]) or 300
         self.__amount = int(self.__config["currency"]["amount"]) or 1
         self.__message = self.__config["currency"]["message"]
@@ -192,6 +192,7 @@ class DataManager:
                         "COALESCE((SELECT currency FROM " + self.__channel + " WHERE id=?)+?, ?))",
                         (user, user, user, currency_amount, currency_amount))
         con.commit()
+        con.close()
 
     def add_user(self, user, perm_lvl=0, currency=0):
         con = sqlite3.connect(DataManager.DATABASE_NAME)

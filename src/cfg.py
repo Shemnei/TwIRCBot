@@ -37,7 +37,6 @@ config = {
     },
     "currency": {
         "enabled": False,
-        "channel": "lirik",
         "interval": 60,                        # <- in sec
         "amount": 1,
         "message": "I'm laughing straight to the bank with this (Ha, ha ha ha ha ha, ha, ha ha ha ha ha)"
