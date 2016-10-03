@@ -80,7 +80,7 @@ class IRCConnection:
         self.add_raw_msg(("PRIVMSG #%s :%s" % (self.__active_channel, msg)), important)
 
     def add_raw_msg(self, msg, important=False):
-        if not self.__config["general"]["silent_mode"] or important:
+        if important or not self.__config["general"]["silent_mode"] or (self.__config["general"]["only_silent_in_other_channels"] and self.__active_channel == self.__config["connection"]["channel"]):
             self.__send_queue.put(msg)
 
     def __receive_routine(self):

@@ -16,12 +16,11 @@ Tested on: Windows 10 and Ubuntu 16.04.1
 TODO:
 
 
-- database for users (for keeping track of permission_level or points etc...)
+- ✔ database for users (for keeping track of permission_level or points etc...)
 - ✔ tag parsing for default plugins
 - cfg -> silent_in_other_channels
 - cfg -> lang_t2s
 - ✔ cfg -> load_plugins
-- cfg -> disable_cmd_execution
 - ✔ cfg -> custom_load_order
 - ✔ cfg -> disabled_plugins
 

@@ -26,12 +26,11 @@ config = {
         "join_msg": ".me up and running!",
         "depart_msg": ".me battery empty, leaving!",
         "silent_mode": True,
-        "silent_in_other_channels": True,       # <- todo
-        "lang_t2s": 'en'                        # <- todo
+        "only_silent_in_other_channels": True,
+        "lang_t2s": 'en'
     },
     "plugins": {
         "load_plugins": True,
-        "disable_cmd_execution": False,             # <- if on only cmd are being disabled, but do i need it ?
         "custom_load_order": ["gui_user_input"],    # <- loads those plugins in order first then the others found
         "disabled_plugins": ["display_raw", "cmd_example"],
     },

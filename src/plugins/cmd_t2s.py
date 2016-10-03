@@ -18,7 +18,7 @@ class IRCPlugin(master.Plugin):
     def cmd(self, line):
         line = re.sub(self.get_regex(), "", line)
         if len(line) > 0:
-            tts = gtts.gTTS(text=line, lang='en')
+            tts = gtts.gTTS(text=line, lang=self.bot.get_config_manager()["general"]["lang_t2s"])
             tts.save(self.mp3_path)
             os.system("start %s" % self.mp3_path)
 

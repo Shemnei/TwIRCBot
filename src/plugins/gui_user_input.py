@@ -75,7 +75,7 @@ class IRCPlugin(master.Plugin):
         msg = self.message_field.get()
         if msg:
             self.msg_handle_command_history(msg)
-            self.connection.add_raw_msg(msg)
+            self.connection.add_chat_msg(msg)
             self.message_field.delete(0, tkinter.END)
 
     def msg_handle_command_history(self, msg):
