@@ -37,7 +37,10 @@ class IRCPlugin(master.Plugin):
                 user = tag_cmp["display-name"]
 
         line = re.sub(self.get_regex(), "", line)
-        print_tm(title + user + ": " + line, color)
+        if user == "twitchnotify":
+            print_tm("NOTIFY: " + line, self.connection.Color.BRIGHT_BLUE)
+        else:
+            print_tm(title + user + ": " + line, color)
 
 
 def print_tm(msg, color=None):
