@@ -63,6 +63,7 @@ class PluginManager:
                     index = tmp.index(x)
                     print("-Plugin %s disabled !" % self.loaded_plugins[index].__module__)
                     self.loaded_plugins.pop(tmp.index(x))
+                    tmp.pop(tmp.index(x))
 
         for p in self.loaded_plugins:
             p.on_load(self.__bot)
