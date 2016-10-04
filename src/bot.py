@@ -80,6 +80,9 @@ class Bot:
     def get_config_manager(self):
         return self.__cfg
 
+    def get_currency_manager(self):
+        return self.__currency_manager
+
 if __name__ == '__main__':
     bot = Bot(cfg.config)
     bot.start()

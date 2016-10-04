@@ -134,25 +134,28 @@ class CurrencyManager:
             self.__running = True
             while not self.__stop.wait(1):
                 self.__stop.wait(self.__interval)
-                with urllib.request.urlopen(CurrencyManager.CHATTERS_URL % self.__channel) as c:
-                    content = c.read()
-                jo = json.loads(content.decode())
-                chatters = []
-                [chatters.extend(x) for x in jo["chatters"].values()]
-
-                # process viewer lists
-                start = time.clock()
-
-                self.__data_manager.process_chatters_list(chatters, self.__amount)
-
-                print("Debug: Currency add time: %fms" % ((time.clock() - start) * 1000))
-
-                # end
-                print("\033[34;1m{" + datetime.datetime.now().strftime("%H:%M:%S") +
-                      "} Currency given to %s viewers\033[0m" % jo["chatter_count"])
-                self.__connection.add_raw_msg("PRIVMSG #%s :%s" % (self.__channel, self.__message))
+                self.add_currency(self.__amount, self.__message)
         finally:
             self.__running = False
+
+    def add_currency(self, currency_amount, msg):
+        with urllib.request.urlopen(CurrencyManager.CHATTERS_URL % self.__channel) as c:
+            content = c.read()
+        jo = json.loads(content.decode())
+        chatters = []
+        [chatters.extend(x) for x in jo["chatters"].values()]
+
+        # process viewer lists
+        start = time.clock()
+
+        self.__data_manager.process_chatters_list(chatters, currency_amount)
+
+        print("Debug: Currency add time: %fms" % ((time.clock() - start) * 1000))
+
+        # end
+        print("\033[34;1m{" + datetime.datetime.now().strftime("%H:%M:%S") +
+              "} Currency given to %s viewers\033[0m" % jo["chatter_count"])
+        self.__connection.add_raw_msg("PRIVMSG #%s :%s" % (self.__channel, msg))
 
     def close(self):
         # TODO add safety so that it doesnt get shutdown during adding
@@ -186,6 +189,8 @@ class DataManager:
     def process_chatters_list(self, chatters, currency_amount):
         con = sqlite3.connect(DataManager.DATABASE_NAME)
         cur = con.cursor()
+
+        self.__loaded_user = None
 
         cur.execute("BEGIN TRANSACTION")
         for user in chatters:

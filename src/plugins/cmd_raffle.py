@@ -16,7 +16,7 @@ class IRCPlugin(master.Plugin):
         self.__random = random.seed()
         self.__id = 0
 
-    # raffle (open, close, join, draw_other) (automate_close_time)
+    # raffle (start, close, join, draw_other) (automate_close_time)
     def get_regex(self):
         return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!raffle "
 
@@ -24,7 +24,7 @@ class IRCPlugin(master.Plugin):
         user = re.search(r":\w+!", line).group(0).strip(":!").lower()
         args = re.sub(self.get_regex(), "", line).split()
 
-        if args[0] == "open":
+        if args[0] == "start":
 
             if self.__running:
                 self.connection.add_chat_msg("There is currently another raffle running!")
@@ -43,6 +43,8 @@ class IRCPlugin(master.Plugin):
 
             if self.__running:
                 self.__running = False
+                # remove identical records
+                self.__entries = list(set(self.__entries))
                 if len(self.__entries) == 0:
                     self.connection.add_chat_msg("Raffle ended! No entries :(")
                 else:
@@ -58,7 +60,7 @@ class IRCPlugin(master.Plugin):
         elif args[0] == "join":
 
             if self.__running:
-                self.connection.add_chat_msg("%s entered the raffle!" % user)
+                self.connection.add_chat_msg(".w %s You entered the raffle!" % user)
                 self.__entries.append(user)
             else:
                 self.connection.add_chat_msg("There is currently no raffle running!")
@@ -81,4 +83,4 @@ class IRCPlugin(master.Plugin):
             self.connection.add_received_msg("!raffle close")
 
     def get_description(self):
-        return "!raffle (open/close/join) (time_to_auto_close) - Opens a raffle to draw a random winner"
+        return "!raffle (start/close/join) (time_to_auto_close) - Opens a raffle to draw a random winner"
