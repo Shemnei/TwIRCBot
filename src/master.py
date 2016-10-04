@@ -4,6 +4,8 @@ class Plugin:
         self.bot = None
         self.connection = None
         self.plugin_manager = None
+        self.config = None
+        self.data_manager = None
 
     def get_regex(self):
         """
@@ -24,6 +26,8 @@ class Plugin:
         self.bot = bot
         self.plugin_manager = bot.get_plugin_manager()
         self.connection = bot.get_connection()
+        self.config = bot.get_config_manager()
+        self.data_manager = bot.get_data_manager()
         print("+Plugin %s loaded" % self.__module__)
 
     def on_refresh(self):

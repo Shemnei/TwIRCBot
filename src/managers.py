@@ -164,10 +164,13 @@ class CurrencyManager:
 class DataManager:
     DATABASE_NAME = "../users.db"
 
+    # perms: 0(basic), 1(follower), 2(sub), 3(mod), 4(broad)
+
     def __init__(self, bot):
         self.__bot = bot
         self.__config = bot.get_config_manager()
         self.__channel = self.__config["connection"]["channel"]
+        self.__loaded_user = None
 
     def setup_database(self):
         start = time.clock()
@@ -199,36 +202,33 @@ class DataManager:
         cur = con.cursor()
         try:
             cur.execute("INSERT INTO " + self.__channel + " (id, perm_lvl, currency) VALUES (?,?,?)", (user, perm_lvl, currency))
+            self.__loaded_user = (user, perm_lvl, currency)
             con.commit()
         finally:
             con.close()
 
     def get_user_currency(self, user):
-        con = sqlite3.connect(DataManager.DATABASE_NAME)
-        cur = con.cursor()
-
-        cur.execute("INSERT OR IGNORE INTO " + self.__channel + " (id, perm_lvl, currency) VALUES (?,?,?)", (user, 0, 0))
-        cur.execute("SELECT currency FROM " + self.__channel + " WHERE users.id=?", (user,))
-        user = cur.fetchone()
-        con.commit()
-        con.close()
-        return user[0]
+        return self.get_user(user)[2]
 
     def set_user_currency(self, user, new_currency):
         con = sqlite3.connect(DataManager.DATABASE_NAME)
         cur = con.cursor()
 
+        self.__loaded_user = None
+
         cur.execute("INSERT OR REPLACE INTO " + self.__channel + " (id, perm_lvl, currency) VALUES ("
                     "?,"
                     "COALESCE((SELECT perm_lvl FROM " + self.__channel + " WHERE id=?), 0),"
-                    "?",
-                    (user, user, user, new_currency))
+                    "?)",
+                    (user, user, new_currency))
         con.commit()
         con.close()
 
     def add_user_currency(self, user, amount):
         con = sqlite3.connect(DataManager.DATABASE_NAME)
         cur = con.cursor()
+
+        self.__loaded_user = None
 
         cur.execute("INSERT OR REPLACE INTO " + self.__channel + " (id, perm_lvl, currency) VALUES ("
                     "?,"
@@ -239,24 +239,36 @@ class DataManager:
         con.close()
 
     def get_user_permlvl(self, user):
-        con = sqlite3.connect(DataManager.DATABASE_NAME)
-        cur = con.cursor()
-
-        cur.execute("INSERT OR IGNORE INTO " + self.__channel + " (id, perm_lvl, currency) VALUES (?,?,?)", (user, 0, 0))
-        cur.execute("SELECT perm_lvl FROM " + self.__channel + " WHERE users.id=?", (user,))
-        user = cur.fetchone()
-        con.commit()
-        con.close()
-        return user[0]
+        return self.get_user(user)[1]
 
     def set_user_permlvl(self, user, new_permlvl):
         con = sqlite3.connect(DataManager.DATABASE_NAME)
         cur = con.cursor()
 
-        cur.execute("INSERT OR IGNORE INTO " + self.__channel + " (id, perm_lvl, currency) VALUES (?,?,?)", (user, 0, 0))
-        cur.execute("UPDATE " + self.__channel + " SET perm_lvl=? WHERE id=?", (new_permlvl, user))
+        self.__loaded_user = None
+
+        cur.execute("INSERT OR REPLACE INTO " + self.__channel + " (id, perm_lvl, currency) VALUES ("
+                    "?,"
+                    "?,"
+                    "COALESCE((SELECT perm_lvl FROM " + self.__channel + " WHERE id=?), 0))",
+                    (user, new_permlvl, user))
         con.commit()
         con.close()
+
+    def get_user(self, user):
+        if self.__loaded_user and self.__loaded_user[0] == user:
+            return self.__loaded_user
+        con = sqlite3.connect(DataManager.DATABASE_NAME)
+        cur = con.cursor()
+
+        cur.execute("INSERT OR IGNORE INTO " + self.__channel + " (id, perm_lvl, currency) VALUES (?,?,?)", (user, 0, 0))
+        cur.execute("SELECT * FROM " + self.__channel + " WHERE id=?", (user,))
+        user = cur.fetchone()
+        con.commit()
+        con.close()
+
+        self.__loaded_user = user
+        return user
 
     def close(self):
         print("DEBUG: Data System closing")

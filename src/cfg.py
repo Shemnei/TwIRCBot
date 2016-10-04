@@ -26,13 +26,13 @@ config = {
         "join_msg": ".me up and running!",
         "depart_msg": ".me battery empty, leaving!",
         "silent_mode": True,
-        "only_silent_in_other_channels": True,
+        "only_silent_in_other_channels": False,
         "lang_t2s": 'en'
     },
     "plugins": {
         "load_plugins": True,
         "custom_load_order": ["gui_user_input"],    # <- loads those plugins in order first then the others found
-        "disabled_plugins": ["display_raw", "cmd_example"],
+        "disabled_plugins": ["display_raw"],
     },
     "currency": {
         "enabled": False,
