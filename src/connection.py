@@ -143,7 +143,7 @@ class IRCConnection:
         for p in self.__plugin_manager.loaded_plugins:
             p.on_channel_change(self.__active_channel)
 
-        if self.__config["general"]["join_msg"] and not self.__config["general"]["silent_mode"] and not reconnect:
+        if self.__config["general"]["join_msg"] and not reconnect:
             self.add_chat_msg(self.__config["general"]["join_msg"])
 
     def reconnect(self):
@@ -156,7 +156,7 @@ class IRCConnection:
 
     def close(self):
         print("DEBUG: Connection closing")
-        if self.__config["general"]["depart_msg"] and not self.__config["general"]["silent_mode"]:
+        if self.__config["general"]["depart_msg"]:
             self.add_chat_msg(self.__config["general"]["depart_msg"])
         self.add_raw_msg("PART #%s" % self.__active_channel)
 

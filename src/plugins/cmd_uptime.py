@@ -9,6 +9,7 @@ import master
 
 class IRCPlugin(master.Plugin):
 
+    COOL_DOWN = 10
     BASE_URL = "https://api.twitch.tv/kraken/streams/%s?client_id=%s"
 
     # TODO test speed
@@ -17,21 +18,25 @@ class IRCPlugin(master.Plugin):
         self.__current_stream_start = None
         self.__current_channel = None
         self.__sample_timestamp = None
+        self.__last_used = None
 
     def get_regex(self):
         return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!uptime$"
 
     def cmd(self, line):
-        if not self.__current_stream_start:
-            print("Uptime: Offline")
-            self.connection.add_chat_msg("Stream is offline")
-        else:
-            current = datetime.datetime.fromtimestamp(time.mktime(time.gmtime())) - datetime.timedelta(hours=1)
-            print("Uptime: %s" % (current - self.__current_stream_start))
-            self.connection.add_chat_msg("Stream online for: %s" % (current - self.__current_stream_start))
+        if not self.__last_used or (time.time() - self.__last_used > IRCPlugin.COOL_DOWN):
+            if not self.__current_stream_start:
+                print("Uptime: Offline")
+                self.connection.add_chat_msg("Stream is offline")
+            else:
+                current = datetime.datetime.fromtimestamp(time.mktime(time.gmtime())) - datetime.timedelta(hours=1)
+                print("Uptime: %s" % (current - self.__current_stream_start))
+                self.connection.add_chat_msg("Stream online for: %s" % (current - self.__current_stream_start))
 
-        if time.time() - self.__sample_timestamp > 300:
-            threading.Thread(name="uptime_request_thread", target=self.get_created_at).start()
+            if time.time() - self.__sample_timestamp > 300:
+                threading.Thread(name="uptime_request_thread", target=self.get_created_at).start()
+
+            self.__last_used = time.time()
 
     def get_created_at(self):
         with urllib.request.urlopen(IRCPlugin.BASE_URL % (self.__current_channel, self.bot.get_config_manager()["connection"]["client_id"])) as c:
