@@ -1,7 +1,5 @@
 import re
 
-import time
-
 import master
 
 # ONLY FOR BOT SELF

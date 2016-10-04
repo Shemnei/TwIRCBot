@@ -1,8 +1,8 @@
 import os
 import re
+import time
 
 import gtts
-import time
 
 import master
 

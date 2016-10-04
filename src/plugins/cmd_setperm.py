@@ -10,6 +10,7 @@ class IRCPlugin(master.Plugin):
 
     def cmd(self, line):
         match = re.search(self.get_regex(), line)
+        # FIXME .group is invalid if no tags
         print("DEBUG: Set permission level of %s to %s" % (match.group(2), match.group(3)))
         self.bot.get_data_manager().set_user_permlvl(match.group(2), int(match.group(3)))
 
