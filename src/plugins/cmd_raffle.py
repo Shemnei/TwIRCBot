@@ -23,38 +23,53 @@ class IRCPlugin(master.Plugin):
         user = re.search(r":\w+!", line).group(0).strip(":!").lower()
         args = re.sub(self.get_regex(), "", line).split()
 
-        if args[0] == "start":
+        if self.data_manager.get_user_permlvl(user) >= self.data_manager.PermissionLevel.moderator:
 
-            if self.__running:
-                self.connection.add_chat_msg("There is currently another raffle running!")
-            else:
-                self.__id += 1
-                self.__running = True
-                self.__entries = []
-                self.connection.add_chat_msg("Raffle started! Join with !raffle join.")
-                if len(args) == 2 and args[1].isnumeric():
-                    counter = int(args[1])
-                    self.connection.add_chat_msg("Raffle self closing in %is" % counter)
-                    c = threading.Thread(target=self.self_closing, args=(self.__id, counter), name="self_closing_raffle_thread")
-                    c.start()
+            if args[0] == "start":
 
-        elif args[0] == "close":
-
-            if self.__running:
-                self.__running = False
-                # remove identical records
-                self.__entries = list(set(self.__entries))
-                if len(self.__entries) == 0:
-                    self.connection.add_chat_msg("Raffle ended! No entries :(")
+                if self.__running:
+                    self.connection.add_chat_msg("There is currently another raffle running!")
                 else:
-                    self.connection.add_chat_msg("Raffle ended! Drawing winner!")
+                    self.__id += 1
+                    self.__running = True
+                    self.__entries = []
+                    self.connection.add_chat_msg("Raffle started! Join with !raffle join.")
+                    if len(args) == 2 and args[1].isnumeric():
+                        counter = int(args[1])
+                        self.connection.add_chat_msg("Raffle self closing in %is" % counter)
+                        c = threading.Thread(target=self.self_closing, args=(self.__id, counter), name="self_closing_raffle_thread")
+                        c.start()
+
+            elif args[0] == "close":
+
+                if self.__running:
+                    self.__running = False
+                    # remove identical records
+                    self.__entries = list(set(self.__entries))
+                    if len(self.__entries) == 0:
+                        self.connection.add_chat_msg("Raffle ended! No entries :(")
+                    else:
+                        self.connection.add_chat_msg("Raffle ended! Drawing winner!")
+                        random.shuffle(self.__entries)
+                        winner = random.choice(self.__entries)
+                        self.__entries.remove(winner)
+                        self.connection.add_chat_msg("The winner is %s. Congratulation!" % winner)
+                        self.connection.add_chat_msg(".w %s The winner of raffle %i is %s." % (self.config["connection"]["channel"], self.__id ,winner))
+                else:
+                    self.connection.add_chat_msg("There is currently no raffle running!")
+
+            elif args[0] == "draw_other":
+
+                if len(self.__entries) > 0:
+                    self.connection.add_chat_msg("Drawing another winner!")
                     random.shuffle(self.__entries)
                     winner = random.choice(self.__entries)
                     self.__entries.remove(winner)
                     self.connection.add_chat_msg("The winner is %s. Congratulation!" % winner)
-                    self.connection.add_chat_msg(".w %s The winner of raffle %i is %s." % (self.config["connection"]["channel"], self.__id ,winner))
-            else:
-                self.connection.add_chat_msg("There is currently no raffle running!")
+                    self.connection.add_chat_msg(".w %s The winner of raffle %i is %s." % (
+                    self.config["connection"]["channel"], self.__id, winner))
+                else:
+                    self.connection.add_chat_msg("There are no entries!")
 
         elif args[0] == "join":
 
@@ -64,17 +79,7 @@ class IRCPlugin(master.Plugin):
             else:
                 self.connection.add_chat_msg("There is currently no raffle running!")
 
-        elif args[0] == "draw_other":
 
-            if len(self.__entries) > 0:
-                self.connection.add_chat_msg("Drawing another winner!")
-                random.shuffle(self.__entries)
-                winner = random.choice(self.__entries)
-                self.__entries.remove(winner)
-                self.connection.add_chat_msg("The winner is %s. Congratulation!" % winner)
-                self.connection.add_chat_msg(".w %s The winner of raffle %i is %s." % (self.config["connection"]["channel"], self.__id, winner))
-            else:
-                self.connection.add_chat_msg("There are no entries!")
 
     def self_closing(self, raffle_id, countdown):
         time.sleep(countdown)

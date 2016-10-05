@@ -22,12 +22,16 @@ class IRCPlugin(master.Plugin):
 
     def cmd(self, line):
         if not self.__last_used or (time.time() - self.__last_used > IRCPlugin.COOL_DOWN):
-            line = re.sub(self.get_regex(), "", line)
-            if len(line) > 0:
-                tts = gtts.gTTS(text=line, lang=self.__lang)
-                tts.save(self.mp3_path)
-                os.system("start %s" % self.mp3_path)
-            self.__last_used = time.time()
+
+            user = re.search(r":\w+!", line).group(0).strip(":!").lower()
+            if self.data_manager.get_user_permlvl(user) >= self.data_manager.PermissionLevel.subscriber:
+
+                line = re.sub(self.get_regex(), "", line)
+                if len(line) > 0:
+                    tts = gtts.gTTS(text=line, lang=self.__lang)
+                    tts.save(self.mp3_path)
+                    os.system("start %s" % self.mp3_path)
+                self.__last_used = time.time()
 
     def on_load(self, bot):
         super().on_load(bot)

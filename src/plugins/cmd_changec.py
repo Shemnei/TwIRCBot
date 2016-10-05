@@ -11,7 +11,8 @@ class IRCPlugin(master.Plugin):
 
     def cmd(self, line):
         user = re.search(r":\w+!", line).group(0).strip(":!").lower()
-        if user == self.config["connection"]["nick_name"] or user == self.config["connection"]["channel"].lower():
+        if user == self.config["connection"]["nick_name"].lower():
+
             channel = re.sub(self.get_regex(), "", line).strip()
             match = re.search(r"^(\w+)$", channel)
             if match:

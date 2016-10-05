@@ -1,4 +1,5 @@
 import datetime
+import enum
 import json
 import os
 import sqlite3
@@ -166,7 +167,13 @@ class CurrencyManager:
 class DataManager:
     DATABASE_NAME = "../users.db"
 
-    # perms: 0(basic), 1(follower), 2(sub), 3(mod), 4(broad)
+    @enum.unique
+    class PermissionLevel(enum.IntEnum):
+        basic = 0
+        follower = 1
+        subscriber = 2
+        moderator = 3
+        broadcaster = 4
 
     def __init__(self, bot):
         self.__bot = bot
@@ -254,7 +261,7 @@ class DataManager:
         cur.execute("INSERT OR REPLACE INTO " + self.__channel + " (id, perm_lvl, currency) VALUES ("
                     "?,"
                     "?,"
-                    "COALESCE((SELECT perm_lvl FROM " + self.__channel + " WHERE id=?), 0))",
+                    "COALESCE((SELECT currency FROM " + self.__channel + " WHERE id=?), 0))",
                     (user, new_permlvl, user))
         con.commit()
         con.close()
