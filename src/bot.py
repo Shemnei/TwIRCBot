@@ -67,6 +67,7 @@ class Bot:
         self.__running = False
         self.__currency_manager.close()
         self.__cron_task.close()
+        self.__distribution_manager.close()
         self.__plugin_manager.close()
         self.__connection.close()
 
