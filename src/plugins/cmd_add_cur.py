@@ -10,9 +10,9 @@ class IRCPlugin(master.CommandPlugin):
         return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!add_cur \w+ \d+"
 
     def cmd(self, message):
-        if message.user[1] >= self.data_manager.PermissionLevel.moderator:
+        if message.user[1] >= self.data_manager.PermissionLevel.moderator or message.user[0] == self.config["connection"]["nick_name"].lower():
 
-            args = message.msg.replace("!add_cur ").split()
+            args = message.msg.replace("!add_cur ", '').split()
 
             amount = int(args[1])
             args.append("")
