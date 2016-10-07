@@ -19,6 +19,6 @@ class IRCPlugin(master.Plugin):
             if match is not None:
                 print(match, end=" ")
                 print(message.user)
-                self.connection.add_chat_msg(IRCPlugin.message % message.user)
-                self.connection.add_chat_msg(IRCPlugin.command % message.user)
+                self.connection.add_chat_msg(IRCPlugin.message % message.user[0])
+                self.connection.add_chat_msg(IRCPlugin.command % message.user[0])
                 return
