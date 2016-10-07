@@ -6,7 +6,7 @@ import time
 import master
 
 
-class IRCPlugin(master.Plugin):
+class IRCPlugin(master.CommandPlugin):
 
     def __init__(self):
         super().__init__()
@@ -19,11 +19,10 @@ class IRCPlugin(master.Plugin):
     def get_regex(self):
         return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!raffle "
 
-    def cmd(self, line):
-        user = re.search(r":\w+!", line).group(0).strip(":!").lower()
-        args = re.sub(self.get_regex(), "", line).split()
+    def cmd(self, message):
+        args = message.msg.replace("!raffle ", '').split()
 
-        if self.data_manager.get_user_permlvl(user) >= self.data_manager.PermissionLevel.moderator:
+        if message.user[1] >= self.data_manager.PermissionLevel.moderator:
 
             if args[0] == "start":
 
@@ -54,7 +53,7 @@ class IRCPlugin(master.Plugin):
                         winner = random.choice(self.__entries)
                         self.__entries.remove(winner)
                         self.connection.add_chat_msg("The winner is %s. Congratulation!" % winner)
-                        self.connection.add_chat_msg(".w %s The winner of raffle %i is %s." % (self.config["connection"]["channel"], self.__id ,winner))
+                        self.connection.add_chat_msg(".w %s The winner of raffle %i is %s." % (self.config["connection"]["channel"], self.__id , winner))
                 else:
                     self.connection.add_chat_msg("There is currently no raffle running!")
 
@@ -67,15 +66,15 @@ class IRCPlugin(master.Plugin):
                     self.__entries.remove(winner)
                     self.connection.add_chat_msg("The winner is %s. Congratulation!" % winner)
                     self.connection.add_chat_msg(".w %s The winner of raffle %i is %s." % (
-                    self.config["connection"]["channel"], self.__id, winner))
+                        self.config["connection"]["channel"], self.__id, winner))
                 else:
                     self.connection.add_chat_msg("There are no entries!")
 
         elif args[0] == "join":
 
             if self.__running:
-                self.connection.add_chat_msg(".w %s You entered the raffle!" % user)
-                self.__entries.append(user)
+                self.connection.add_chat_msg(".w %s You entered the raffle!" % message.user[0])
+                self.__entries.append(message.user[0])
             else:
                 self.connection.add_chat_msg("There is currently no raffle running!")
 

@@ -5,7 +5,7 @@ import time
 import master
 
 
-class IRCPlugin(master.Plugin):
+class IRCPlugin(master.CommandPlugin):
 
     COOL_DOWN = 10
 
@@ -16,10 +16,10 @@ class IRCPlugin(master.Plugin):
     def get_regex(self):
         return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!(\w+)$"
 
-    def cmd(self, line):
+    def cmd(self, message):
         if not self.__last_used or (time.time() - self.__last_used > IRCPlugin.COOL_DOWN):
 
-            name = re.sub(r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!", "", line)
+            name = message.msg.lstrip('!')
 
             if name == "youtube":
                 self.connection.add_chat_msg("I am on youtube: www.youtube.com")

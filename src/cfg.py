@@ -26,7 +26,7 @@ config = {
         "join_msg": ".me up and running!",
         "depart_msg": ".me battery empty, leaving!",
         "silent_mode": True,
-        "only_silent_in_other_channels": True,
+        "only_silent_in_other_channels": False,
         "lang_t2s": 'en'
     },
     "plugins": {

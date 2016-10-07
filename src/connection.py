@@ -11,6 +11,8 @@ class IRCConnection:
     def __init__(self, bot):
         self.__bot = bot
         self.__config = bot.get_config_manager()
+        self.__distribution_manager = bot.get_distribution_manager()
+
         self.__running = False
         self.__active_channel = None
         self.__send_thread = threading.Thread(target=self.__send_routine, name="send_thread")
@@ -111,7 +113,7 @@ class IRCConnection:
 
     def add_received_msg(self, msg):
         full_msg = (":{0}!{0}@{0}.tmi.twitch.tv PRIVMSG #{1} :{2}"
-                    .format(self.__config["connection"]["nick_name"], self.__active_channel, msg))
+                    .format(self.__config["connection"]["nick_name"].lower(), self.__active_channel, msg))
         self.__receive_queue.put(full_msg)
 
     def __process_routine(self):
@@ -119,9 +121,7 @@ class IRCConnection:
             try:
                 line = self.__receive_queue.get(timeout=5)
                 if line:
-                    for p in self.__plugin_manager.loaded_plugins:
-                        if re.match(p.get_regex(), line):
-                            p.cmd(line)
+                    self.__distribution_manager.add_line(line)
             except queue.Empty:
                 pass
             except KeyboardInterrupt:
@@ -188,12 +188,4 @@ class IRCConnection:
         BRIGHT_WHITE = "\033[37;1m"
         RESET = "\033[0m"
 
-    @staticmethod
-    def parse_tags(tag_str):
-        tag_str = tag_str.strip()
-        tag_str = tag_str.lstrip('@')
-        tags = {}
-        for tag_c in tag_str.split(";"):
-            i = tag_c.find("=")
-            tags[tag_c[:i]] = tag_c[i + 1:]
-        return tags
+

@@ -14,21 +14,20 @@ class Plugin:
         """
         return r"."
 
-    def cmd(self, line):
+    def cmd(self, message):
         """
         Will be called if get_regex() matched line.
-        :param line: received line (without trailing \r\n)
+        :param message: namedtuple Message(user, tags, cm)
         """
         pass
 
     def on_load(self, bot):
         """Called once when the bot first loads the plugin"""
         self.bot = bot
-        self.plugin_manager = bot.get_plugin_manager()
         self.connection = bot.get_connection()
+        self.plugin_manager = bot.get_plugin_manager()
         self.config = bot.get_config_manager()
         self.data_manager = bot.get_data_manager()
-        print("+Plugin %s loaded" % self.__module__)
 
     def on_refresh(self):
         """Called every time the bot refreshes/reloads its plugins"""
@@ -52,3 +51,36 @@ class Plugin:
         :param new_channel: new connected channel
         """
         pass
+
+
+class FilterPlugin(Plugin):
+
+    def __init__(self):
+        super().__init__()
+
+    def on_load(self, bot):
+        super().on_load(bot)
+        print("+Filter %s loaded" % self.__module__)
+
+
+class CommandPlugin(Plugin):
+
+    def __init__(self):
+        super().__init__()
+
+    def on_load(self, bot):
+        super().on_load(bot)
+        print("+Command %s loaded" % self.__module__)
+
+    def get_usage(self):
+        return "not implemented"
+
+
+class GenericPlugin(Plugin):
+
+    def __init__(self):
+        super().__init__()
+
+    def on_load(self, bot):
+        super().on_load(bot)
+        print("+Plugin %s loaded" % self.__module__)

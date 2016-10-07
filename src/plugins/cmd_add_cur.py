@@ -4,16 +4,15 @@ import threading
 import master
 
 
-class IRCPlugin(master.Plugin):
+class IRCPlugin(master.CommandPlugin):
 
     def get_regex(self):
         return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!add_cur \w+ \d+"
 
-    def cmd(self, line):
-        user = re.search(r":\w+!", line).group(0).strip(":!").lower()
-        if self.data_manager.get_user_permlvl(user) >= self.data_manager.PermissionLevel.moderator:
+    def cmd(self, message):
+        if message.user[1] >= self.data_manager.PermissionLevel.moderator:
 
-            args = re.sub(r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!add_cur ", "", line).split()
+            args = message.msg.replace("!add_cur ").split()
 
             amount = int(args[1])
             args.append("")

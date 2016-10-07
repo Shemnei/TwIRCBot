@@ -2,11 +2,15 @@ import datetime
 import enum
 import json
 import os
+import queue
 import sqlite3
 import threading
 import time
 import urllib.request
 from importlib import util
+import collections
+
+import re
 
 import master
 
@@ -80,6 +84,93 @@ class PluginManager:
 
         for p in self.loaded_plugins:
             p.on_close()
+
+
+class MessageDistributor:
+
+    Message = collections.namedtuple("Message", ["user", "tags", "cmd", "channel", "msg", "raw_line"])
+
+    def __init__(self, bot):
+        self.__running = False
+
+        self.__bot = bot
+        self.__data_manager = bot.get_data_manager()
+
+        self.__distribution_queue = queue.Queue()
+        self.__distribution_thread = threading.Thread(target=self.__distribution_routine, name="distribution_thread")
+
+    def add_line(self, msg):
+        try:
+            self.__distribution_queue.put_nowait(msg)
+        except queue.Full():
+            pass
+
+    @staticmethod
+    def parse_tags(tag_str):
+        tag_str = tag_str.strip()
+        tag_str = tag_str.lstrip('@')
+        tags = {}
+        for tag_c in tag_str.split(";"):
+            i = tag_c.find("=")
+            tags[tag_c[:i]] = tag_c[i + 1:]
+        return tags
+
+    def parse_line(self, line):
+        # (User, tags, cmd, msg)
+        tags = None
+        channel = None
+        msg = None
+
+        parts = line.split()
+        offset = 0
+
+        if line.startswith('@'):
+            tags = self.parse_tags(parts[0])
+            offset = True
+
+        index = parts[0 + offset].find('!')
+        if index == -1:
+            user_name = parts[0 + offset]
+        else:
+            user_name = parts[0 + offset][1:index]
+        if user_name.startswith(':'):
+            user = (user_name, 0, 0)
+        else:
+            user = self.__data_manager.get_user(user_name)
+
+        cmd = parts[1 + offset]
+
+        if len(parts) >= (3 + offset):
+            channel = parts[2 + offset].replace('#', '')
+
+        if len(parts) >= (4 + offset):
+            msg = " ".join(parts[3 + offset:]).lstrip(':')
+
+        return MessageDistributor.Message(user, tags, cmd, channel, msg, line)
+
+    def __distribution_routine(self):
+        while self.__running:
+            try:
+                line = self.__distribution_queue.get(timeout=5)
+                if line:
+                    message = self.parse_line(line)
+                    for p in self.__bot.get_plugin_manager().loaded_plugins:
+                        if re.match(p.get_regex(), line):
+                            p.cmd(message)
+            except queue.Empty:
+                pass
+            except KeyboardInterrupt:
+                raise
+
+    def start(self):
+        print("DEBUG: Distributor starting")
+        self.__running = True
+        self.__distribution_thread.start()
+
+    def close(self):
+        print("DEBUG: Distributor closing")
+        self.__running = False
+        self.__distribution_thread.join()
 
 
 class CurrencyManager:

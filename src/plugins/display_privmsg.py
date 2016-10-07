@@ -4,43 +4,40 @@ import re
 import master
 
 
-class IRCPlugin(master.Plugin):
+class IRCPlugin(master.GenericPlugin):
 
     def get_regex(self):
         return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :"
 
-    def cmd(self, line):
-        user = re.search(r":\w+!", line)
-        user = user.group(0).strip(":!")
+    def cmd(self, message):
+        user = message.user[0]
         title = ""
         color = None
-        if line.startswith('@'):
-            tag_cmp = self.connection.parse_tags(line[:line.find(" ")])
+        if message.tags:
             tmp = ""
-            if tag_cmp.get("turbo", None) == "1":
+            if message.tags.get("turbo", None) == "1":
                 tmp += "T/"
-            if tag_cmp.get("subscriber", None) == "1":
+            if message.tags.get("subscriber", None) == "1":
                 tmp += "S/"
                 color = self.connection.Color.BRIGHT_YELLOW
-            if tag_cmp.get("mod", None) == "1":
+            if message.tags.get("mod", None) == "1":
                 tmp += "M/"
                 color = self.connection.Color.BRIGHT_RED
-            if tag_cmp.get("bits", None):
-                tmp += tag_cmp["bits"] + "/"
+            if message.tags.get("bits", None):
+                tmp += message.tags["bits"] + "/"
                 color = self.connection.Color.BRIGHT_BLUE
-            if "broadcaster/1" in tag_cmp.get("badges", ""):
+            if "broadcaster/1" in message.tags.get("badges", ""):
                 tmp += "B"
                 color = self.connection.Color.BRIGHT_MAGENTA
             tmp = tmp.strip("/")
             title = "| (%s) " % tmp
-            if tag_cmp.get("display-name", None):
-                user = tag_cmp["display-name"]
+            if message.tags.get("display-name", None):
+                user = message.tags["display-name"]
 
-        line = re.sub(self.get_regex(), "", line)
         if user == "twitchnotify":
-            print_tm("NOTIFY: " + line, self.connection.Color.BRIGHT_BLUE)
+            print_tm("NOTIFY: " + message.msg, self.connection.Color.BRIGHT_BLUE)
         else:
-            print_tm(title + user + ": " + line, color)
+            print_tm(title + user + ": " + message.msg, color)
 
 
 def print_tm(msg, color=None):

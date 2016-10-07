@@ -12,17 +12,13 @@ class IRCPlugin(master.Plugin):
     def get_regex(self):
         return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :"
 
-    def cmd(self, line):
-        user = re.search(r":\w+!", line)
-        user = user.group(0).strip(":!").title()
-
-        line = re.sub(self.get_regex(), "", line)
+    def cmd(self, message):
 
         for regex in IRCPlugin.url_regex:
-            match = re.search(regex, line)
+            match = re.search(regex, message.msg)
             if match is not None:
                 print(match, end=" ")
-                print(user)
-                self.connection.add_chat_msg(IRCPlugin.message % user)
-                self.connection.add_chat_msg(IRCPlugin.command % user)
+                print(message.user)
+                self.connection.add_chat_msg(IRCPlugin.message % message.user)
+                self.connection.add_chat_msg(IRCPlugin.command % message.user)
                 return

@@ -33,6 +33,7 @@ class Bot:
         self.__cfg = config
         self.__data_manager = managers.DataManager(self)
         self.__data_manager.setup_database()
+        self.__distribution_manager = managers.MessageDistributor(self)
         self.__connection = connection.IRCConnection(self)
         self.__cron_task = cron.CronTask(self)
         self.__cron_task.load_cron_jobs()
@@ -45,6 +46,7 @@ class Bot:
         # ansi color support for cmd
         enable_cmd_colors()
 
+        self.__distribution_manager.start()
         self.__connection.connect()
         self.__currency_manager.start()
         self.__cron_task.start()
@@ -70,6 +72,9 @@ class Bot:
 
     def get_data_manager(self):
         return self.__data_manager
+
+    def get_distribution_manager(self):
+        return self.__distribution_manager
 
     def get_plugin_manager(self):
         return self.__plugin_manager

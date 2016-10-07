@@ -6,7 +6,7 @@ from tkinter import messagebox
 import master
 
 
-class IRCPlugin(master.Plugin):
+class IRCPlugin(master.GenericPlugin):
 
     HISTORY_SIZE = 30
 
@@ -23,7 +23,7 @@ class IRCPlugin(master.Plugin):
     def get_regex(self):
         return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!show_gui$"
 
-    def cmd(self, line):
+    def cmd(self, message):
         self.gui_root.deiconify()
 
     def on_load(self, bot):

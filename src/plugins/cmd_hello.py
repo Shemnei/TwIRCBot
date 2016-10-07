@@ -4,7 +4,7 @@ import time
 import master
 
 
-class IRCPlugin(master.Plugin):
+class IRCPlugin(master.CommandPlugin):
 
     COOL_DOWN = 10
 
@@ -15,10 +15,11 @@ class IRCPlugin(master.Plugin):
     def get_regex(self):
         return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!hello"
 
-    def cmd(self, line):
+    def cmd(self, message):
         if not self.__last_used or (time.time() - self.__last_used > IRCPlugin.COOL_DOWN):
-            user = re.search(r":\w+!", line)
-            user = user.group(0).strip(":!").title()
+            user = message.user
+            if message.tags and message.tags["display-name"]:
+                user = message.tags["display-name"]
             self.connection.add_chat_msg("Hello there %s" % user)
             self.__last_used = time.time()
 

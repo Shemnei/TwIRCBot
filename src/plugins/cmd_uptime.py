@@ -7,7 +7,7 @@ import urllib.request
 import master
 
 
-class IRCPlugin(master.Plugin):
+class IRCPlugin(master.CommandPlugin):
 
     COOL_DOWN = 10
     BASE_URL = "https://api.twitch.tv/kraken/streams/%s?client_id=%s"
@@ -23,7 +23,7 @@ class IRCPlugin(master.Plugin):
     def get_regex(self):
         return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!uptime$"
 
-    def cmd(self, line):
+    def cmd(self, message):
         if not self.__last_used or (time.time() - self.__last_used > IRCPlugin.COOL_DOWN):
             if not self.__current_stream_start:
                 print("Uptime: Offline")

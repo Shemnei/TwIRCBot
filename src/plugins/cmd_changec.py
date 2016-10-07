@@ -4,16 +4,15 @@ import master
 
 # ONLY FOR BOT SELF
 
-class IRCPlugin(master.Plugin):
+class IRCPlugin(master.CommandPlugin):
 
     def get_regex(self):
         return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!changec"
 
-    def cmd(self, line):
-        user = re.search(r":\w+!", line).group(0).strip(":!").lower()
-        if user == self.config["connection"]["nick_name"].lower():
+    def cmd(self, message):
+        if message.user[0] == self.config["connection"]["nick_name"].lower():
 
-            channel = re.sub(self.get_regex(), "", line).strip()
+            channel = message.msg.replace("!changec", '').strip()
             match = re.search(r"^(\w+)$", channel)
             if match:
                 print(self.connection.Color.GREEN + "DEBUG: CHANGING CHANNELS" + self.connection.Color.RESET)
