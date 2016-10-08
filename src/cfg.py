@@ -35,7 +35,8 @@ config = {
     },
     "plugin_settings": {
         "lang_t2s": 'en',
-        "enable_gui_messages": False,
+        "enable_gui_messages": True,
+        "display_emotes": True,
     },
     "currency": {
         "enabled": False,

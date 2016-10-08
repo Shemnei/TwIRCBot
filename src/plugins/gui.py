@@ -31,6 +31,7 @@ class IRCPlugin(master.GenericPlugin):
         self.auto_scroll = None
 
         self.message_display_enabled = None
+        self.display_emotes = None
 
     def get_regex(self):
         if self.message_display_enabled:
@@ -40,7 +41,7 @@ class IRCPlugin(master.GenericPlugin):
 
     def cmd(self, message):
         user = message.user[0]
-        if message.tags and message.tags.get("emotes", ""):
+        if message.tags and message.tags.get("emotes", "") and self.display_emotes:
             user = message.tags.get("display-name", user)
             emotes_str = message.tags.get("emotes", None)
             emotes = self.parse_emotes(emotes_str)
@@ -112,6 +113,7 @@ class IRCPlugin(master.GenericPlugin):
     def on_load(self, bot):
         super().on_load(bot)
         self.message_display_enabled = self.config["plugin_settings"]["enable_gui_messages"]
+        self.display_emotes = self.config["plugin_settings"]["display_emotes"]
         gui_thread = threading.Thread(name="user_input_thread", target=self.open_gui)
         gui_thread.setDaemon(True)
         gui_thread.start()
