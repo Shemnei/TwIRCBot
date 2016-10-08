@@ -17,7 +17,6 @@ class IRCConnection:
         self.__active_channel = None
         self.__send_thread = threading.Thread(target=self.__send_routine, name="send_thread")
         self.__receive_thread = threading.Thread(target=self.__receive_routine, name="receive_thread")
-        self.__process_thread = threading.Thread(target=self.__process_routine, name="process_input_thread")
 
         self.__plugin_manager = None
         self.__irc_socket = None
@@ -44,9 +43,6 @@ class IRCConnection:
         if not self.__receive_thread.is_alive():
             self.__receive_thread.start()
             print("DEBUG: Receive Thread started")
-        if not self.__process_thread.is_alive():
-            self.__process_thread.start()
-            print("DEBUG: Process Thread started")
 
         req_str = ""
         if self.__config["connection"]["membership_messages"]:
@@ -88,6 +84,7 @@ class IRCConnection:
     def __receive_routine(self):
         buffer = ""
         while self.__running:
+            # FIXME ConnectionAbortedError
             buffer = "".join((buffer, self.__irc_socket.recv(self.__config["connection"]["receive_size_bytes"])
                               .decode(self.__config["connection"]["msg_decoding"])))
 
@@ -96,7 +93,7 @@ class IRCConnection:
                 if self.__config["connection"]["auto_reconnect"]:
                     self.reconnect()
                 else:
-                    print("AUTO RECONNECT OF - SHUTTING DOWN")
+                    print("AUTO RECONNECT OFF - SHUTTING DOWN")
                     self.__running = False
                     self.__bot.stop()
 
@@ -109,23 +106,12 @@ class IRCConnection:
                     buffer = lines.pop()
 
             for line in lines:
-                self.__receive_queue.put(line.rstrip())
+                self.__distribution_manager.add_line(line.rstrip())
 
     def add_received_msg(self, msg):
         full_msg = (":{0}!{0}@{0}.tmi.twitch.tv PRIVMSG #{1} :{2}"
                     .format(self.__config["connection"]["nick_name"].lower(), self.__active_channel, msg))
-        self.__receive_queue.put(full_msg)
-
-    def __process_routine(self):
-        while self.__running:
-            try:
-                line = self.__receive_queue.get(timeout=5)
-                if line:
-                    self.__distribution_manager.add_line(line)
-            except queue.Empty:
-                pass
-            except KeyboardInterrupt:
-                raise
+        self.__distribution_manager.add_line(full_msg)
 
     def join_channel(self, channel, reconnect=False):
         if self.__active_channel:
@@ -166,8 +152,6 @@ class IRCConnection:
         print("DEBUG: Receive Thread stopped")
         self.__send_thread.join()
         print("DEBUG: Send Thread stopped")
-        self.__process_thread.join()
-        print("DEBUG: Process Thread stopped")
 
         self.__irc_socket.close()
 

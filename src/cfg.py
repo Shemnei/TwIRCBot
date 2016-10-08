@@ -27,12 +27,15 @@ config = {
         "depart_msg": ".me battery empty, leaving!",
         "silent_mode": True,
         "only_silent_in_other_channels": False,
-        "lang_t2s": 'en'
     },
     "plugins": {
         "load_plugins": True,
         "custom_load_order": ["gui_user_input"],    # <- loads those plugins in order first then the others found
-        "disabled_plugins": ["display_raw"],
+        "disabled_plugins": ["display_raw", ""],
+    },
+    "plugin_settings": {
+        "lang_t2s": 'en',
+        "enable_gui_messages": False,
     },
     "currency": {
         "enabled": False,

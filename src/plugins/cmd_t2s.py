@@ -34,7 +34,7 @@ class IRCPlugin(master.CommandPlugin):
 
     def on_load(self, bot):
         super().on_load(bot)
-        self.__lang = self.bot.get_config_manager()["general"]["lang_t2s"] or "en"
+        self.__lang = self.bot.get_config_manager()["plugin_settings"]["lang_t2s"] or "en"
 
     def get_description(self):
         return "!t2s [text] - Converts text to audio and plays it"

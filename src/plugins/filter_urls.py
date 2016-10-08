@@ -4,7 +4,7 @@ import master
 
 
 class IRCPlugin(master.Plugin):
-    url_regex = [r"(https?://)?(www\.)?.+\.\w{2,6}",
+    url_regex = [r"[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)",
                  r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"]
     message = "Links are not permitted %s => timeout"
     command = ".timeout %s 60 No urls permitted!"

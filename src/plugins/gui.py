@@ -30,8 +30,13 @@ class IRCPlugin(master.GenericPlugin):
         self.message_index = 0
         self.auto_scroll = None
 
+        self.message_display_enabled = None
+
     def get_regex(self):
-        return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :"
+        if self.message_display_enabled:
+            return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :"
+        else:
+            return r"$ä"
 
     def cmd(self, message):
         user = message.user[0]
@@ -106,15 +111,18 @@ class IRCPlugin(master.GenericPlugin):
 
     def on_load(self, bot):
         super().on_load(bot)
-        if not os.path.isdir(IRCPlugin.EMOTE_DIR):
-            os.makedirs(IRCPlugin.EMOTE_DIR)
+        self.message_display_enabled = self.config["plugin_settings"]["enable_gui_messages"]
         gui_thread = threading.Thread(name="user_input_thread", target=self.open_gui)
         gui_thread.setDaemon(True)
         gui_thread.start()
-        self.load_existing_emotes()
+        if self.message_display_enabled:
+            if not os.path.isdir(IRCPlugin.EMOTE_DIR):
+                os.makedirs(IRCPlugin.EMOTE_DIR)
+            self.load_existing_emotes()
 
     def on_channel_change(self, new_channel):
-        self.text_field.delete("1.0", tkinter.END)
+        if self.message_display_enabled:
+            self.text_field.delete("1.0", tkinter.END)
         self.gui_root.wm_title(
             "TwIRC - [Active plugins: %i/%s]" % (len(self.plugin_manager.loaded_plugins), new_channel))
 
@@ -125,10 +133,11 @@ class IRCPlugin(master.GenericPlugin):
         root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.gui_root = root
 
-        TW = tkinter.Text(wrap=tkinter.WORD)
-        TW.config(state=tkinter.DISABLED)
-        TW.grid(row=0, column=0, rowspan=8, columnspan=9)
-        self.text_field = TW
+        if self.message_display_enabled:
+            TW = tkinter.Text(wrap=tkinter.WORD)
+            TW.config(state=tkinter.DISABLED)
+            TW.grid(row=0, column=0, rowspan=8, columnspan=9)
+            self.text_field = TW
 
         LC = tkinter.Label(root, text="CMD: ")
         LC.grid(row=9, column=0)
@@ -154,24 +163,25 @@ class IRCPlugin(master.GenericPlugin):
 
         self.message_field = EM
 
-        self.auto_scroll = tkinter.IntVar()
-        CB = tkinter.Checkbutton(root, text="AutoScroll", variable=self.auto_scroll, onvalue=1, offvalue=0)
-        CB.toggle()
-        CB.grid(row=9, column=8)
+        if self.message_display_enabled:
+            self.auto_scroll = tkinter.IntVar()
+            CB = tkinter.Checkbutton(root, text="AutoScroll", variable=self.auto_scroll, onvalue=1, offvalue=0)
+            CB.toggle()
+            CB.grid(row=9, column=8)
 
         tkinter.mainloop()
 
     def add_msg(self, msg):
         self.text_field.config(state=tkinter.NORMAL)
-        for parts in msg:
-            if parts.startswith("{emote}"):
-                emote_id = parts.replace("{emote}", "")
+        for part in msg:
+            if part.startswith("{emote}"):
+                emote_id = part.replace("{emote}", "")
                 self.text_field.image_create(tkinter.END, image=self.loaded_emotes[emote_id])
             else:
                 try:
-                    self.text_field.insert(tkinter.END, parts)
+                    self.text_field.insert(tkinter.END, part)
                 except:
-                    pass
+                    print("DEBUG: GUI UNEXPECTED CHAR: %s" % part)
         self.text_field.insert(tkinter.END, "\n")
         if self.auto_scroll.get() == 1:
             self.text_field.see(tkinter.END)
