@@ -7,7 +7,6 @@ import urllib.request
 from idlelib import ToolTip
 
 from PIL import Image, ImageTk
-import time
 
 import master
 
@@ -40,9 +39,12 @@ class IRCPlugin(master.GenericPlugin):
             return r"$ä"
 
     def cmd(self, message):
+        print(message)
         user = message.user[0]
         if message.tags and message.tags.get("emotes", "") and self.display_emotes:
-            user = message.tags.get("display-name", user)
+            display_name = message.tags.get("display-name", None)
+            if display_name:
+                user = display_name
             emotes_str = message.tags.get("emotes", None)
             emotes = self.parse_emotes(emotes_str)
             self.load_emote_if_not_exists(emotes)
