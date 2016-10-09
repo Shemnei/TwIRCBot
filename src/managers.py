@@ -284,7 +284,7 @@ class DataManager:
         print("Debug: Database setup time: %fms" % ((time.clock() - start) * 1000))
 
     def process_chatters_list(self, chatters, currency_amount):
-        con = sqlite3.connect(DataManager.DATABASE_NAME)
+        con = sqlite3.connect(DataManager.DATABASE_NAME, timeout=10)
         cur = con.cursor()
 
         self.__loaded_user = None
@@ -300,7 +300,7 @@ class DataManager:
         con.close()
 
     def add_user(self, user, perm_lvl=0, currency=0):
-        con = sqlite3.connect(DataManager.DATABASE_NAME)
+        con = sqlite3.connect(DataManager.DATABASE_NAME, timeout=10)
         cur = con.cursor()
         try:
             cur.execute("INSERT INTO " + self.__channel + " (id, perm_lvl, currency) VALUES (?,?,?)", (user, perm_lvl, currency))
@@ -313,7 +313,7 @@ class DataManager:
         return self.get_user(user)[2]
 
     def set_user_currency(self, user, new_currency):
-        con = sqlite3.connect(DataManager.DATABASE_NAME)
+        con = sqlite3.connect(DataManager.DATABASE_NAME, timeout=10)
         cur = con.cursor()
 
         self.__loaded_user = None
@@ -327,7 +327,7 @@ class DataManager:
         con.close()
 
     def add_user_currency(self, user, amount):
-        con = sqlite3.connect(DataManager.DATABASE_NAME)
+        con = sqlite3.connect(DataManager.DATABASE_NAME, timeout=10)
         cur = con.cursor()
 
         self.__loaded_user = None
@@ -344,7 +344,7 @@ class DataManager:
         return self.get_user(user)[1]
 
     def set_user_permlvl(self, user, new_permlvl):
-        con = sqlite3.connect(DataManager.DATABASE_NAME)
+        con = sqlite3.connect(DataManager.DATABASE_NAME, timeout=10)
         cur = con.cursor()
 
         self.__loaded_user = None
@@ -360,7 +360,7 @@ class DataManager:
     def get_user(self, user):
         if self.__loaded_user and self.__loaded_user[0] == user:
             return self.__loaded_user
-        con = sqlite3.connect(DataManager.DATABASE_NAME)
+        con = sqlite3.connect(DataManager.DATABASE_NAME, timeout=10)
         cur = con.cursor()
 
         cur.execute("INSERT OR IGNORE INTO " + self.__channel + " (id, perm_lvl, currency) VALUES (?,?,?)", (user, 0, 0))

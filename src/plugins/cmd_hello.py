@@ -17,8 +17,8 @@ class IRCPlugin(master.CommandPlugin):
 
     def cmd(self, message):
         if not self.__last_used or (time.time() - self.__last_used > IRCPlugin.COOL_DOWN):
-            user = message.user
-            if message.tags and message.tags["display-name"]:
+            user = message.user[0]
+            if message.tags and message.tags.get["display-name"]:
                 user = message.tags["display-name"]
             self.connection.add_chat_msg("Hello there %s" % user)
             self.__last_used = time.time()

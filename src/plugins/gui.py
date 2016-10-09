@@ -39,7 +39,6 @@ class IRCPlugin(master.GenericPlugin):
             return r"$ä"
 
     def cmd(self, message):
-        print(message)
         user = message.user[0]
         if message.tags and message.tags.get("emotes", "") and self.display_emotes:
             display_name = message.tags.get("display-name", None)
