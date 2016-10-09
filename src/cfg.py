@@ -12,7 +12,7 @@ config = {
         "nick_name": cfg_c.USER,
         "oauth_token": cfg_c.OAUTH,
         "client_id": cfg_c.CLIENT,
-        "channel": "riotgames",
+        "channel": "lirik",
         "msg_decoding": "utf-8",
         "msg_encoding": "utf-8",
         "timeout_between_msg": (20 / 30),
@@ -37,6 +37,7 @@ config = {
         "lang_t2s": 'en',
         "enable_gui_messages": True,
         "enable_gui_emotes": True,
+        "enable_gui_badges": True,
     },
     "currency": {
         "enabled": False,

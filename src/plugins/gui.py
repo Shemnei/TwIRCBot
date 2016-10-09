@@ -1,5 +1,6 @@
 import datetime
 import io
+import json
 import os
 import threading
 import tkinter
@@ -14,24 +15,30 @@ import master
 
 
 class IRCPlugin(master.GenericPlugin):
-    URL = "http://static-cdn.jtvnw.net/emoticons/v1/%s/1.0"
+    EMOTE_URL = "http://static-cdn.jtvnw.net/emoticons/v1/%s/1.0"
+    GENERIC_BADGE_URL = "http://badges.twitch.tv/v1/badges/global/display"
+    CHANNEL_BADGE_URL = "https://api.twitch.tv/kraken/chat/%s/badges?client_id=%s"
     HISTORY_SIZE = 20
 
     def __init__(self):
         super().__init__()
         self.gui_root = None
         self.text_field = None
-        self.loaded_emotes = {}
         self.command_field = None
         self.message_field = None
+
         self.command_history = [""]
         self.message_history = [""]
         self.command_index = 0
         self.message_index = 0
         self.auto_scroll = None
 
+        self.loaded_emotes = {}
+        self.loaded_badges = {}
+
         self.message_display_enabled = None
-        self.display_emotes = None
+        self.emote_display_enabled = None
+        self.badge_display_enabled = None
         self.nr_loaded_plugins = None
 
     def get_regex(self):
@@ -42,16 +49,37 @@ class IRCPlugin(master.GenericPlugin):
 
     def cmd(self, message):
         user = message.user[0]
-        if message.tags and message.tags.get("emotes", "") and self.display_emotes:
+        if message.tags:
+
+            message_parts = ["[" + datetime.datetime.now().strftime("%H:%M:%S") + "] "]
+
             display_name = message.tags.get("display-name", None)
             if display_name:
                 user = display_name
-            emotes_str = message.tags.get("emotes", None)
-            emotes = self.parse_emotes(emotes_str)
-            self.load_emote_if_not_exists(emotes)
-            parts = self.parse_msg(message.msg, emotes)
-            parts.insert(0, "[" + datetime.datetime.now().strftime("%H:%M:%S") + "] " + user + ": ")
-            self.add_msg(parts)
+
+            if message.tags.get("badges", "") and self.badge_display_enabled:
+                badges = message.tags["badges"]
+                for badge in badges.split(","):
+                    if badge.startswith("bits"):
+                        message_parts.append("{badge}%s" % badge)
+                    else:
+                        message_parts.append("{badge}%s" % badge[:-2])
+                if len(message_parts) > 1:
+                    message_parts.append(" ")
+
+            message_parts.append(user)
+            message_parts.append(": ")
+
+            if message.tags.get("emotes", "") and self.emote_display_enabled:
+                emotes_str = message.tags.get("emotes", None)
+                emotes = self.parse_emotes(emotes_str)
+                self.load_emote_if_not_exists(emotes)
+                parts = self.parse_msg(message.msg, emotes)
+                message_parts.extend(parts)
+            else:
+                message_parts.append(message.msg)
+
+            self.add_msg(message_parts)
         else:
             self.add_msg(["[" + datetime.datetime.now().strftime("%H:%M:%S") + "] " + user + ": " + message.msg])
 
@@ -60,7 +88,7 @@ class IRCPlugin(master.GenericPlugin):
             if emote_id == "80393":
                 print("GOLDEN KAPPA")
             if emote_id not in self.loaded_emotes:
-                data = urllib.request.urlopen(self.URL % emote_id).read()
+                data = urllib.request.urlopen(self.EMOTE_URL % emote_id).read()
                 stream = io.BytesIO(data)
                 self.loaded_emotes[emote_id] = ImageTk.PhotoImage(Image.open(stream))
 
@@ -102,7 +130,8 @@ class IRCPlugin(master.GenericPlugin):
     def on_load(self, bot):
         super().on_load(bot)
         self.message_display_enabled = self.config["plugin_settings"]["enable_gui_messages"]
-        self.display_emotes = self.config["plugin_settings"]["enable_gui_emotes"]
+        self.emote_display_enabled = self.config["plugin_settings"]["enable_gui_emotes"]
+        self.badge_display_enabled = self.config["plugin_settings"]["enable_gui_badges"]
         self.nr_loaded_plugins = len(self.plugin_manager.get_loaded_plugins())
         gui_thread = threading.Thread(name="user_input_thread", target=self.open_gui)
         gui_thread.setDaemon(True)
@@ -113,8 +142,47 @@ class IRCPlugin(master.GenericPlugin):
             self.text_field.config(state=tkinter.NORMAL)
             self.text_field.delete("1.0", tkinter.END)
             self.text_field.config(state=tkinter.DISABLED)
+        if self.badge_display_enabled:
+            t = threading.Thread(target=self.load_badges, args=(new_channel,), name="badges_fetch_thread")
+            t.start()
         self.gui_root.wm_title(
             "TwIRC - [Active plugins: %i/%s]" % (self.nr_loaded_plugins, new_channel))
+
+    def load_badges(self, channel):
+        try:
+            data = urllib.request.urlopen(self.GENERIC_BADGE_URL).read()
+            j_data = json.loads(data.decode())
+
+            for k in j_data["badge_sets"].keys():
+                for v in j_data["badge_sets"][k]["versions"]:
+                    try:
+                        url = j_data["badge_sets"][k]["versions"][v]["image_url_1x"]
+                        data = urllib.request.urlopen(url).read()
+                        stream = io.BytesIO(data)
+                        key = k
+                        if k == "mod":
+                            key = "moderator"
+                        if k == "bits":
+                            key += "/" + str(v)
+                        self.loaded_badges[key] = ImageTk.PhotoImage(Image.open(stream))
+                    except Exception as e:
+                        pass
+
+            data = urllib.request.urlopen(self.CHANNEL_BADGE_URL % (channel, self.bot.get_config_manager()["connection"]["client_id"])).read()
+            j_data = json.loads(data.decode())
+
+            for k in j_data.keys():
+                try:
+                    url = j_data[k]["image"]
+                    data = urllib.request.urlopen(url).read()
+                    stream = io.BytesIO(data)
+                    if k == "mod":
+                        k = "moderator"
+                    self.loaded_badges[k] = ImageTk.PhotoImage(Image.open(stream))
+                except Exception as e:
+                    pass
+        except:
+            pass
 
     def open_gui(self):
         root = tkinter.Tk()
@@ -167,6 +235,12 @@ class IRCPlugin(master.GenericPlugin):
             if part.startswith("{emote}"):
                 emote_id = part.replace("{emote}", "")
                 self.text_field.image_create(tkinter.END, image=self.loaded_emotes[emote_id])
+            elif part.startswith("{badge}"):
+                badge_id = part.replace("{badge}", "")
+                try:
+                    self.text_field.image_create(tkinter.END, image=self.loaded_badges[badge_id])
+                except:
+                    pass
             else:
                 try:
                     self.text_field.insert(tkinter.END, part)

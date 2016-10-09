@@ -12,7 +12,6 @@ class IRCPlugin(master.CommandPlugin):
     COOL_DOWN = 10
     BASE_URL = "https://api.twitch.tv/kraken/streams/%s?client_id=%s"
 
-    # TODO test speed
     def __init__(self):
         super().__init__()
         self.__current_stream_start = None

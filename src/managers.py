@@ -258,7 +258,6 @@ class CurrencyManager:
         self.__connection.add_raw_msg("PRIVMSG #%s :%s" % (self.__channel, msg))
 
     def close(self):
-        # TODO add safety so that it doesnt get shutdown during adding
         print("DEBUG: Currency System closing")
         self.__stop.set()
         self.__currency_thread.join()
