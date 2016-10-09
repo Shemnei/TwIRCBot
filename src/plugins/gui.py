@@ -114,7 +114,7 @@ class IRCPlugin(master.GenericPlugin):
     def on_load(self, bot):
         super().on_load(bot)
         self.message_display_enabled = self.config["plugin_settings"]["enable_gui_messages"]
-        self.display_emotes = self.config["plugin_settings"]["display_emotes"]
+        self.display_emotes = self.config["plugin_settings"]["enable_gui_emotes"]
         gui_thread = threading.Thread(name="user_input_thread", target=self.open_gui)
         gui_thread.setDaemon(True)
         gui_thread.start()

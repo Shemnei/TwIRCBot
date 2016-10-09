@@ -65,6 +65,12 @@ class FilterPlugin(Plugin):
 
 class CommandPlugin(Plugin):
 
+    COMMAND = "ni"
+    DESCRIPTION = "ni"
+    ADD_TO_HELP = False
+    PERMISSION_LEVEL = 0
+    COOL_DOWN = 0
+
     def __init__(self):
         super().__init__()
 
