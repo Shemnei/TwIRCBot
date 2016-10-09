@@ -17,7 +17,7 @@ import master
 
 class PluginManager:
     def __init__(self, bot):
-        self.loaded_plugins = []
+        self.__loaded_plugins = []
 
         self.__config = bot.get_config_manager()
         self.__connection = bot.get_connection()
@@ -48,29 +48,29 @@ class PluginManager:
         # custom load order
         load_order = self.__config["plugins"]["custom_load_order"]
         if load_order:
-            self.loaded_plugins = []
+            self.__loaded_plugins = []
             tmp = [x.__module__ for x in loaded]
             for pl in load_order:
                 if pl in tmp:
                     index = tmp.index(pl)
-                    self.loaded_plugins.append(loaded[index])
+                    self.__loaded_plugins.append(loaded[index])
                     loaded.pop(index)
-            self.loaded_plugins.extend(loaded)
+            self.__loaded_plugins.extend(loaded)
         else:
-            self.loaded_plugins = list(loaded)
+            self.__loaded_plugins = list(loaded)
 
         # disabled plugins
         disabled_plugins = self.__config["plugins"]["disabled_plugins"]
         if disabled_plugins:
-            tmp = [x.__module__ for x in self.loaded_plugins]
+            tmp = [x.__module__ for x in self.__loaded_plugins]
             for x in disabled_plugins:
                 if x in tmp:
                     index = tmp.index(x)
-                    print("-Plugin %s disabled !" % self.loaded_plugins[index].__module__)
-                    self.loaded_plugins.pop(tmp.index(x))
+                    print("-Plugin %s disabled !" % self.__loaded_plugins[index].__module__)
+                    self.__loaded_plugins.pop(tmp.index(x))
                     tmp.pop(tmp.index(x))
 
-        for p in self.loaded_plugins:
+        for p in self.__loaded_plugins:
             p.on_load(self.__bot)
 
         not_loaded = filter(lambda plugin: not isinstance(plugin, master.Plugin), plugins)
@@ -79,10 +79,13 @@ class PluginManager:
 
         print("DEBUG: Plugins Loaded in %fms" % ((time.time() - start_load_plugins) * 1000))
 
+    def get_loaded_plugins(self):
+        return self.__loaded_plugins[:]
+
     def close(self):
         print("DEBUG: Plugin Manager closing")
 
-        for p in self.loaded_plugins:
+        for p in self.__loaded_plugins:
             p.on_close()
 
 
@@ -96,8 +99,13 @@ class MessageDistributor:
         self.__bot = bot
         self.__data_manager = bot.get_data_manager()
 
+        self.__loaded_plugins = None
+
         self.__distribution_queue = queue.Queue()
         self.__distribution_thread = threading.Thread(target=self.__distribution_routine, name="distribution_thread")
+
+    def get_active_plugins(self):
+        self.__loaded_plugins = self.__bot.get_plugin_manager().get_loaded_plugins()
 
     def add_line(self, msg):
         try:
@@ -154,7 +162,7 @@ class MessageDistributor:
                 line = self.__distribution_queue.get(timeout=5)
                 if line:
                     message = self.parse_line(line)
-                    for p in self.__bot.get_plugin_manager().loaded_plugins:
+                    for p in self.__loaded_plugins:
                         if re.match(p.get_regex(), line):
                             p.cmd(message)
             except queue.Empty:
@@ -165,6 +173,7 @@ class MessageDistributor:
     def start(self):
         print("DEBUG: Distributor starting")
         self.__running = True
+        self.__loaded_plugins = self.__bot.get_plugin_manager().get_loaded_plugins()
         self.__distribution_thread.start()
 
     def close(self):

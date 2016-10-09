@@ -1,10 +1,12 @@
 import datetime
+import io
 import os
 import threading
 import tkinter
 from tkinter import messagebox
 import urllib.request
 from idlelib import ToolTip
+import time
 
 from PIL import Image, ImageTk
 
@@ -13,7 +15,6 @@ import master
 
 class IRCPlugin(master.GenericPlugin):
     URL = "http://static-cdn.jtvnw.net/emoticons/v1/%s/1.0"
-    EMOTE_DIR = "emotes"
     HISTORY_SIZE = 20
 
     def __init__(self):
@@ -31,6 +32,7 @@ class IRCPlugin(master.GenericPlugin):
 
         self.message_display_enabled = None
         self.display_emotes = None
+        self.nr_loaded_plugins = None
 
     def get_regex(self):
         if self.message_display_enabled:
@@ -55,10 +57,12 @@ class IRCPlugin(master.GenericPlugin):
 
     def load_emote_if_not_exists(self, emotes):
         for emote_id in emotes.keys():
-            if not os.path.isfile(os.path.join(IRCPlugin.EMOTE_DIR, emote_id + ".png")):
-                urllib.request.urlretrieve(IRCPlugin.URL % emote_id, os.path.join(IRCPlugin.EMOTE_DIR, emote_id + ".png"))
+            if emote_id == "80393":
+                print("GOLDEN KAPPA")
             if emote_id not in self.loaded_emotes:
-                self.loaded_emotes[emote_id] = ImageTk.PhotoImage(Image.open(os.path.join(IRCPlugin.EMOTE_DIR, emote_id + ".png")))
+                data = urllib.request.urlopen(self.URL % emote_id).read()
+                stream = io.BytesIO(data)
+                self.loaded_emotes[emote_id] = ImageTk.PhotoImage(Image.open(stream))
 
     @staticmethod
     def parse_emotes(emotes_str):
@@ -95,43 +99,26 @@ class IRCPlugin(master.GenericPlugin):
             offset += start - end - 1 + len(rep)
         return msg.split('::')
 
-    def load_existing_emotes(self):
-        loaded_emotes = 0
-        some_dir = os.path.join(IRCPlugin.EMOTE_DIR)
-        assert os.path.isdir(some_dir)
-        num_sep = some_dir.count(os.path.sep)
-        for root, dirs, files in os.walk(some_dir):
-            for file in files:
-                if file.endswith(".png"):
-                    loaded_emotes += 1
-                    name = os.path.splitext(file)[0]
-                    self.loaded_emotes[name] = ImageTk.PhotoImage(Image.open(os.path.join(IRCPlugin.EMOTE_DIR, file)))
-            num_sep_this = root.count(os.path.sep)
-            if num_sep + 1 <= num_sep_this:
-                del dirs[:]
-        print("Loaded Emotes: %i" % loaded_emotes)
-
     def on_load(self, bot):
         super().on_load(bot)
         self.message_display_enabled = self.config["plugin_settings"]["enable_gui_messages"]
         self.display_emotes = self.config["plugin_settings"]["enable_gui_emotes"]
+        self.nr_loaded_plugins = len(self.plugin_manager.get_loaded_plugins())
         gui_thread = threading.Thread(name="user_input_thread", target=self.open_gui)
         gui_thread.setDaemon(True)
         gui_thread.start()
-        if self.message_display_enabled:
-            if not os.path.isdir(IRCPlugin.EMOTE_DIR):
-                os.makedirs(IRCPlugin.EMOTE_DIR)
-            self.load_existing_emotes()
 
     def on_channel_change(self, new_channel):
         if self.message_display_enabled:
+            self.text_field.config(state=tkinter.NORMAL)
             self.text_field.delete("1.0", tkinter.END)
+            self.text_field.config(state=tkinter.DISABLED)
         self.gui_root.wm_title(
-            "TwIRC - [Active plugins: %i/%s]" % (len(self.plugin_manager.loaded_plugins), new_channel))
+            "TwIRC - [Active plugins: %i/%s]" % (self.nr_loaded_plugins, new_channel))
 
     def open_gui(self):
         root = tkinter.Tk()
-        root.wm_title("TwIRC - [Active plugins: %i]" % len(self.plugin_manager.loaded_plugins))
+        root.wm_title("TwIRC - [Active plugins: %i]" % self.nr_loaded_plugins)
         root.resizable(0, 0)
         root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.gui_root = root

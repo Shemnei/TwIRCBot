@@ -55,6 +55,9 @@ class Plugin:
 
 class FilterPlugin(Plugin):
 
+    DESCRIPTION = "ni"
+    PERMISSION_LEVEL = 0        # <- if your level higher then filter wont affect message
+
     def __init__(self):
         super().__init__()
 
@@ -68,7 +71,7 @@ class CommandPlugin(Plugin):
     COMMAND = "ni"
     DESCRIPTION = "ni"
     ADD_TO_HELP = False
-    PERMISSION_LEVEL = 0
+    PERMISSION_LEVEL = 0        # <- your level needs to same or higher to execute command
     COOL_DOWN = 0
 
     def __init__(self):

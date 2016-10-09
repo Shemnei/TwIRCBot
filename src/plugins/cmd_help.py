@@ -58,10 +58,10 @@ class IRCPlugin(master.CommandPlugin):
 
     def on_load(self, bot):
         super().on_load(bot)
-        self.__plugins = self.plugin_manager.loaded_plugins
+        self.__plugins = self.plugin_manager.get_loaded_plugins()
 
     def on_refresh(self):
-        self.__plugins = self.plugin_manager.loaded_plugins
+        self.__plugins = self.plugin_manager.get_loaded_plugins()
 
     def get_description(self):
         return "!help (command) - Gives info about all loaded commands or a specific one"

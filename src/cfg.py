@@ -12,7 +12,7 @@ config = {
         "nick_name": cfg_c.USER,
         "oauth_token": cfg_c.OAUTH,
         "client_id": cfg_c.CLIENT,
-        "channel": "lirik",
+        "channel": "riotgames",
         "msg_decoding": "utf-8",
         "msg_encoding": "utf-8",
         "timeout_between_msg": (20 / 30),
@@ -31,7 +31,7 @@ config = {
     "plugins": {
         "load_plugins": True,
         "custom_load_order": ["gui_user_input"],    # <- loads those plugins in order first then the others found
-        "disabled_plugins": ["display_raw"],
+        "disabled_plugins": ["display_raw", "display_privmsg"],
     },
     "plugin_settings": {
         "lang_t2s": 'en',
@@ -40,7 +40,7 @@ config = {
     },
     "currency": {
         "enabled": False,
-        "interval": 60,                        # <- in sec
+        "interval": 300,                        # <- in sec
         "amount": 1,
         "message": "I'm laughing straight to the bank with this (Ha, ha ha ha ha ha, ha, ha ha ha ha ha)"
     },

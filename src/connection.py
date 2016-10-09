@@ -126,7 +126,7 @@ class IRCConnection:
         self.__active_channel = channel
         print("DEBUG: Joined %s" % channel)
 
-        for p in self.__plugin_manager.loaded_plugins:
+        for p in self.__plugin_manager.get_loaded_plugins():
             p.on_channel_change(self.__active_channel)
 
         if self.__config["general"]["join_msg"] and not reconnect:
