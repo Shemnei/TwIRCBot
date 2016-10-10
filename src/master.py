@@ -93,3 +93,36 @@ class GenericPlugin(Plugin):
     def on_load(self, bot):
         super().on_load(bot)
         print("+Plugin %s loaded" % self.__module__)
+
+
+class Observable:
+    """
+    Simple implementation of the observer pattern
+    """
+
+    def __init__(self):
+        self.__registered_observers = []
+
+    def add_observer(self, observer):
+        if observer not in self.__registered_observers:
+            self.__registered_observers.append(observer)
+
+    def remove_observer(self, observer):
+        self.__registered_observers.remove(observer)
+
+    def notify_observers(self, arg=None):
+        local_list = self.__registered_observers[:]
+        for observer in local_list:
+            observer.update(self, arg)
+
+    def remove_observers(self):
+        self.__registered_observers = []
+
+
+class Observer:
+    """
+    Simple implementation of the observer pattern
+    """
+
+    def update(self, observable, args):
+        pass
