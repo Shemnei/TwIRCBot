@@ -10,7 +10,7 @@ class IRCPlugin(master.Plugin):
     command = ".timeout %s 60 No urls permitted!"
 
     def get_regex(self):
-        return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :"
+        return r"PRIVMSG #\w+ :"
 
     def cmd(self, message):
 

@@ -1,5 +1,4 @@
 import queue
-import re
 import socket
 import ssl
 import threading
@@ -36,7 +35,8 @@ class IRCConnection:
             self.__irc_socket = tmp
 
         self.__irc_socket.connect((self.__config["connection"]["server"], self.__config["connection"]["port"]))
-        print("DEBUG: Connected to %s on %i" % (self.__config["connection"]["server"], self.__config["connection"]["port"]))
+        print("DEBUG: Connected to %s on %i" % (self.__config["connection"]["server"],
+                                                self.__config["connection"]["port"]))
         if not self.__send_thread.is_alive():
             self.__send_thread.start()
             print("DEBUG: Send Thread started")
@@ -65,35 +65,40 @@ class IRCConnection:
             try:
                 msg = self.__send_queue.get(timeout=5)
                 if msg:
-                    # FIXME: ConnectionResetError -> Reconnect
                     self.__irc_socket.send((msg + "\r\n").encode(self.__config["connection"]["msg_encoding"]))
-                    # TODO change sleep time depending on mod or not and add settings
                     time.sleep(self.__config["connection"]["timeout_between_msg"])
-            except KeyboardInterrupt:
-                raise
             except queue.Empty:
                 pass
+            except KeyboardInterrupt:
+                raise
+            except ConnectionResetError:
+                self.reconnect()
 
     def add_chat_msg(self, msg, important=False):
         self.add_raw_msg(("PRIVMSG #%s :%s" % (self.__active_channel, msg)), important)
 
     def add_raw_msg(self, msg, important=False):
-        if important or not self.__config["general"]["silent_mode"] or (self.__config["general"]["only_silent_in_other_channels"] and self.__active_channel == self.__config["connection"]["channel"]):
+        if important or not self.__config["general"]["silent_mode"]\
+                or (self.__config["general"]["only_silent_in_other_channels"]
+                    and self.__active_channel == self.__config["connection"]["channel"]):
             self.__send_queue.put(msg)
 
     def __receive_routine(self):
         buffer = ""
         while self.__running:
-            # FIXME ConnectionAbortedError
-            buffer = "".join((buffer, self.__irc_socket.recv(self.__config["connection"]["receive_size_bytes"])
+
+            try:
+                buffer = "".join((buffer, self.__irc_socket.recv(self.__config["connection"]["receive_size_bytes"])
                               .decode(self.__config["connection"]["msg_decoding"])))
+            except ConnectionAbortedError:
+                self.reconnect()
 
             if len(buffer) == 0:
-                print("CONNECTION LOST")
+                print("DEBUG: CONNECTION LOST")
                 if self.__config["connection"]["auto_reconnect"]:
                     self.reconnect()
                 else:
-                    print("AUTO RECONNECT OFF - SHUTTING DOWN")
+                    print("DEBUG: AUTO RECONNECT OFF - SHUTTING DOWN")
                     self.__running = False
                     self.__bot.stop()
 
@@ -114,6 +119,7 @@ class IRCConnection:
         self.__distribution_manager.add_line(full_msg)
 
     def join_channel(self, channel, reconnect=False):
+        channel = channel.lower()
         if self.__active_channel:
             self.add_raw_msg("PART #%s" % self.__active_channel, important=True)
             print("DEBUG: Left %s" % self.__active_channel)
@@ -126,6 +132,7 @@ class IRCConnection:
         self.__active_channel = channel
         print("DEBUG: Joined %s" % channel)
 
+        # FIXME maybe move to plugin manager
         for p in self.__plugin_manager.get_loaded_plugins():
             p.on_channel_change(self.__active_channel)
 

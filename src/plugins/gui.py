@@ -1,13 +1,11 @@
 import datetime
 import io
 import json
-import os
 import threading
 import tkinter
-from tkinter import messagebox
 import urllib.request
 from idlelib import ToolTip
-import time
+from tkinter import messagebox
 
 from PIL import Image, ImageTk
 
@@ -149,6 +147,7 @@ class IRCPlugin(master.GenericPlugin):
             "TwIRC - [Active plugins: %i/%s]" % (self.nr_loaded_plugins, new_channel))
 
     def load_badges(self, channel):
+        self.loaded_badges.clear()
         try:
             data = urllib.request.urlopen(self.GENERIC_BADGE_URL).read()
             j_data = json.loads(data.decode())

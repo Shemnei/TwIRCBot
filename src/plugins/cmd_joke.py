@@ -1,5 +1,4 @@
 import random
-import re
 import time
 
 import master
@@ -28,7 +27,7 @@ class IRCPlugin(master.CommandPlugin):
         random.seed()
 
     def get_regex(self):
-        return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!joke$"
+        return r"PRIVMSG #\w+ :!joke$"
 
     def cmd(self, message):
         if not self.__last_used or (time.time() - self.__last_used > IRCPlugin.COOL_DOWN):

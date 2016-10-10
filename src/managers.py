@@ -1,16 +1,15 @@
+import collections
 import datetime
 import enum
 import json
 import os
 import queue
+import re
 import sqlite3
 import threading
 import time
 import urllib.request
 from importlib import util
-import collections
-
-import re
 
 import master
 
@@ -163,7 +162,7 @@ class MessageDistributor:
                 if line:
                     message = self.parse_line(line)
                     for p in self.__loaded_plugins:
-                        if re.match(p.get_regex(), line):
+                        if re.search(p.get_regex(), line):
                             p.cmd(message)
             except queue.Empty:
                 pass
@@ -285,7 +284,8 @@ class DataManager:
         con = sqlite3.connect(DataManager.DATABASE_NAME)
         cur = con.cursor()
 
-        cur.execute("CREATE TABLE IF NOT EXISTS " + self.__channel + " (id VARCHAR NOT NULL, perm_lvl INTEGER, currency INTEGER, PRIMARY KEY (id))")
+        cur.execute("CREATE TABLE IF NOT EXISTS " + self.__channel
+                    + " (id VARCHAR NOT NULL, perm_lvl INTEGER, currency INTEGER, PRIMARY KEY (id))")
         con.commit()
 
         con.close()
@@ -311,7 +311,8 @@ class DataManager:
         con = sqlite3.connect(DataManager.DATABASE_NAME, timeout=10)
         cur = con.cursor()
         try:
-            cur.execute("INSERT INTO " + self.__channel + " (id, perm_lvl, currency) VALUES (?,?,?)", (user, perm_lvl, currency))
+            cur.execute("INSERT INTO " + self.__channel + " (id, perm_lvl, currency) VALUES (?,?,?)",
+                        (user, perm_lvl, currency))
             self.__loaded_user = (user, perm_lvl, currency)
             con.commit()
         finally:
@@ -371,7 +372,8 @@ class DataManager:
         con = sqlite3.connect(DataManager.DATABASE_NAME, timeout=10)
         cur = con.cursor()
 
-        cur.execute("INSERT OR IGNORE INTO " + self.__channel + " (id, perm_lvl, currency) VALUES (?,?,?)", (user, 0, 0))
+        cur.execute("INSERT OR IGNORE INTO " + self.__channel + " (id, perm_lvl, currency) VALUES (?,?,?)",
+                    (user, 0, 0))
         cur.execute("SELECT * FROM " + self.__channel + " WHERE id=?", (user,))
         user = cur.fetchone()
         con.commit()

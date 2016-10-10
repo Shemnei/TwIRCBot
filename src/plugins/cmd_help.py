@@ -1,5 +1,4 @@
 import os
-import re
 import time
 
 import master
@@ -26,15 +25,15 @@ class IRCPlugin(master.CommandPlugin):
         self.__last_used = None
 
     def get_regex(self):
-        return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!help"
+        return r"PRIVMSG #\w+ :!help($| )"
 
     def cmd(self, message):
         if not self.__last_used or (time.time() - self.__last_used > IRCPlugin.COOL_DOWN):
-            plugin = message.msg.replace("!help", '').strip()
+            plugin = message.msg[6:].lower().strip()
             filer_str = "cmd_" + plugin
             out = []
             filtered = filter(lambda module: filer_str in module[1].__module__, enumerate(self.__plugins))
-            if plugin:  # not empty
+            if plugin:
                 using = IRCPlugin.specific
             else:
                 using = IRCPlugin.all

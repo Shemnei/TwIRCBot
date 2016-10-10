@@ -13,9 +13,9 @@ def enable_cmd_colors():
     # Windows 10 build 14393: ANSI colors are still supported, but not default
     plt = platform.platform().split(".")
     if plt[0] == "Windows-10" and int(plt[2]) >= 14393:
-        print("DEBUG: Ansi escape sequence enabled [%s]" % platform.platform())
         kernel32 = ctypes.windll.kernel32
         kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
+        print("DEBUG: Ansi escape sequence enabled [%s]" % platform.platform())
 
 
 class Bot:

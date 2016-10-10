@@ -1,5 +1,3 @@
-import re
-
 import time
 
 import master
@@ -14,12 +12,12 @@ class IRCPlugin(master.CommandPlugin):
         self.__last_used = None
 
     def get_regex(self):
-        return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!(\w+)$"
+        return r"PRIVMSG #\w+ :!(\w+)$"
 
     def cmd(self, message):
         if not self.__last_used or (time.time() - self.__last_used > IRCPlugin.COOL_DOWN):
 
-            name = message.msg.lstrip('!')
+            name = message.msg[1:]
 
             if name == "youtube":
                 self.connection.add_chat_msg("I am on youtube: www.youtube.com")

@@ -1,5 +1,4 @@
 import datetime
-import re
 
 import master
 
@@ -7,7 +6,7 @@ import master
 class IRCPlugin(master.GenericPlugin):
 
     def get_regex(self):
-        return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :"
+        return r"(PRIVMSG|WHISPER) #?\w+ :"
 
     def cmd(self, message):
         user = message.user[0]
@@ -24,25 +23,27 @@ class IRCPlugin(master.GenericPlugin):
                 tmp += "M/"
                 color = self.connection.Color.BRIGHT_RED
             if message.tags.get("bits", None):
-                tmp += message.tags["bits"] + "/"
+                tmp += "C" + message.tags["bits"] + "/"
                 color = self.connection.Color.BRIGHT_BLUE
             if "broadcaster/1" in message.tags.get("badges", ""):
                 tmp += "B"
                 color = self.connection.Color.BRIGHT_MAGENTA
-            tmp = tmp.strip("/")
+            tmp = tmp.rstrip("/")
             title = "| (%s) " % tmp
             if message.tags.get("display-name", None):
                 user = message.tags["display-name"]
 
-        if user == "twitchnotify":
-            print_tm("NOTIFY: " + message.msg, self.connection.Color.BRIGHT_BLUE)
+        if message.cmd == "WHISPER":
+            self.print_tm(user + " -> " + message.channel + ": " + message.msg, self.connection.Color.BRIGHT_CYAN)
         else:
-            print_tm(title + user + ": " + message.msg, color)
+            if user == "twitchnotify":
+                self.print_tm("NOTIFY: " + message.msg, self.connection.Color.BRIGHT_BLUE)
+            else:
+                self.print_tm(title + user + ": " + message.msg, color)
 
-
-def print_tm(msg, color=None):
-    if color is None:
-        print("[" + datetime.datetime.now().strftime("%H:%M:%S") + "] " + msg)
-    else:
-        print("[" + datetime.datetime.now().strftime("%H:%M:%S") + "] " + color + msg + "\033[0m")
+    def print_tm(self, msg, color=None):
+        if color is None:
+            print("[" + datetime.datetime.now().strftime("%H:%M:%S") + "] " + msg)
+        else:
+            print("[" + datetime.datetime.now().strftime("%H:%M:%S") + "] " + color + msg + self.connection.Color.RESET)
 

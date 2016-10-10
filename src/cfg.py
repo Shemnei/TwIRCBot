@@ -31,7 +31,7 @@ config = {
     "plugins": {
         "load_plugins": True,
         "custom_load_order": ["gui_user_input"],    # <- loads those plugins in order first then the others found
-        "disabled_plugins": ["display_raw", "display_privmsg"],
+        "disabled_plugins": ["print_raw"],
     },
     "plugin_settings": {
         "lang_t2s": 'en',

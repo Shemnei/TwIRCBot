@@ -2,6 +2,7 @@ Highly modular Twitch Bot
 =========================
 
 STATUS: WORKING / IN DEVELOPMENT
+REQUIRES: Python >= 3.5, gtts, pillow
 
 
 Readme coming soon for now look into /src/plugins for example usage
@@ -17,8 +18,7 @@ TODO:
 
 
 - logging
-- display badges in gui
-- display bits in gui
+- display cheers in gui
 - have viewer list on side of gui and count on top
 
 

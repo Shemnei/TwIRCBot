@@ -1,5 +1,5 @@
 import os
-import re
+import threading
 import time
 
 import gtts
@@ -18,19 +18,22 @@ class IRCPlugin(master.CommandPlugin):
         self.__last_used = None
 
     def get_regex(self):
-        return r"(@.* )?:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!t2s "
+        return r"PRIVMSG #\w+ :!t2s \w+"
 
     def cmd(self, message):
-        if not self.__last_used or (time.time() - self.__last_used > IRCPlugin.COOL_DOWN):
+        if message.user[1] >= self.data_manager.PermissionLevel.subscriber:
 
-            if message.user[1] >= self.data_manager.PermissionLevel.subscriber:
+            if not self.__last_used or (time.time() - self.__last_used > IRCPlugin.COOL_DOWN):
 
-                text = message.msg.replace("!t2s ", '')
+                text = message.msg[5:]
                 if len(text) > 0:
-                    tts = gtts.gTTS(text=text, lang=self.__lang)
-                    tts.save(self.mp3_path)
-                    os.system("start %s" % self.mp3_path)
+                    threading.Thread(target=self.text_2_speech, args=(message,), name="text_to_speech_thread").start()
                 self.__last_used = time.time()
+
+    def text_2_speech(self, text):
+        tts = gtts.gTTS(text=text, lang=self.__lang)
+        tts.save(self.mp3_path)
+        os.system("start %s" % self.mp3_path)
 
     def on_load(self, bot):
         super().on_load(bot)

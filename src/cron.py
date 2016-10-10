@@ -37,7 +37,10 @@ class CronTask:
         intervals = []
         for job in self.__config_manager["cron"].values():
             if job["enabled"]:
-                self.__cron_jobs.append(CronJob(job["interval"], job["channel"], job["message"], job.get("ignore_silent_mode", False)))
+                self.__cron_jobs.append(CronJob(job["interval"],
+                                                job["channel"],
+                                                job["message"],
+                                                job.get("ignore_silent_mode", False)))
                 intervals.append(job["interval"])
         self.__cron_jobs.sort(key=lambda x: x.interval)
 
@@ -63,7 +66,6 @@ class CronTask:
         self.__cron_thread.start()
 
     def __cron_routine(self):
-        # FIXME If silent mode stop thread too
         if not self.__cron_jobs or len(self.__cron_jobs) == 0:
             print("DEBUG: Cron stopped [no jobs]")
             return
@@ -77,7 +79,8 @@ class CronTask:
                     if float(time_slept/cj.interval).is_integer():
                         self.__connection.add_raw_msg(cj.get_msg(), cj.ignore_silent_mode)
 
-                        print("\033[34;1m{" + datetime.datetime.now().strftime("%H:%M:%S") + "} Cron job executed [%s/%i]\033[0m" % (cj.channel, cj.interval))
+                        print("\033[34;1m{" + datetime.datetime.now().strftime("%H:%M:%S")
+                              + "} Cron job executed [%s/%i]\033[0m" % (cj.channel, cj.interval))
                 if self.__cron_jobs[-1].interval <= time_slept:
                     time_slept = 0
         finally:
