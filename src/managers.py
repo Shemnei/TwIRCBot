@@ -181,11 +181,84 @@ class MessageDistributor:
         self.__distribution_thread.join()
 
 
-class CurrencyManager:
+class HeartbeatManager(master.Observable):
+
     CHATTERS_URL = "https://tmi.twitch.tv/group/user/%s/chatters"
 
-    # every interval gets viewers and add x currency to their account
     # "chatters" -> "moderators", "staff", "global_mods", "viewers"
+    def __init__(self, bot):
+        super().__init__()
+
+        self.__bot = bot
+        self.__config = bot.get_config_manager()
+
+        self.__chatter_count = None
+        self.__stored_chatters = {}
+        self.__last_updated = None
+
+        self.__enabled = None
+        self.__channel = None
+        self.__interval = None
+
+        self.__heartbeat_thread = None
+        self.__stop = threading.Event()
+
+    def load_settings(self):
+        self.__enabled = self.__config["heartbeat"]["enabled"]
+        self.__channel = self.__config["connection"]["channel"]
+        self.__interval = int(self.__config["heartbeat"]["interval"]) or 300
+
+    def reload_settings(self):
+        print("DEBUG: Heartbeat System reloading")
+        self.load_settings()
+
+        if not self.__enabled and self.__heartbeat_thread and self.__heartbeat_thread.is_alive():
+            self.close()
+
+        elif self.__heartbeat_thread and not self.__heartbeat_thread.is_alive():
+            self.start()
+
+    def start(self):
+        self.__heartbeat_thread = threading.Thread(target=self.__heartbeat_routine, name="heartbeat_thread")
+        self.__heartbeat_thread.start()
+
+    def __heartbeat_routine(self):
+        if not self.__enabled:
+            print("DEBUG: Heartbeat System disabled")
+            return
+        try:
+            print("DEBUG: Heartbeat System starting")
+            self.__running = True
+            while not self.__stop.wait(1):
+                data = urllib.request.urlopen(self.CHATTERS_URL % self.__channel).read()
+                json_obj = json.loads(data.decode())
+
+                self.__last_updated = time.time()
+                self.__chatter_count = json_obj["chatter_count"]
+                self.__stored_chatters = json_obj["chatters"]
+
+                print("-- FETCHED LIST WITH %s ENTRIES ---" % self.__chatter_count)
+
+                self.notify_observers(None)
+
+                self.__stop.wait(self.__interval)
+
+        finally:
+            self.__running = False
+
+    def get_chatters_list(self):
+        return self.__stored_chatters.copy()
+
+    def get_chatters_amount(self):
+        return self.__chatter_count
+
+    def close(self):
+        print("DEBUG: Heartbeat System closing")
+        self.__stop.set()
+        self.__heartbeat_thread.join()
+
+
+class CurrencyManager(master.Observer):
 
     def __init__(self, bot):
         self.__bot = bot
@@ -194,10 +267,10 @@ class CurrencyManager:
         self.__data_manager = bot.get_data_manager()
 
         self.__enabled = None
-        self.__channel = None
         self.__interval = None
         self.__amount = None
         self.__message = None
+        self.__chatters = {}
 
         self.__running = False
         self.__stop = threading.Event()
@@ -205,7 +278,6 @@ class CurrencyManager:
 
     def load_settings(self):
         self.__enabled = self.__config["currency"]["enabled"]
-        self.__channel = self.__config["connection"]["channel"]
         self.__interval = int(self.__config["currency"]["interval"]) or 300
         self.__amount = int(self.__config["currency"]["amount"]) or 1
         self.__message = self.__config["currency"]["message"]
@@ -221,10 +293,13 @@ class CurrencyManager:
             self.start()
 
     def start(self):
-        self.__currency_thread = threading.Thread(target=self.__heartbeat_routine, name="currency_thread")
+        self.__currency_thread = threading.Thread(target=self.__currency_routine, name="currency_thread")
         self.__currency_thread.start()
 
-    def __heartbeat_routine(self):
+    def update(self, observable, args):
+        self.__chatters = observable.get_chatters_list()
+
+    def __currency_routine(self):
         if not self.__enabled:
             print("DEBUG: Currency System disabled")
             return
@@ -238,14 +313,11 @@ class CurrencyManager:
             self.__running = False
 
     def add_currency(self, currency_amount, msg):
-        with urllib.request.urlopen(CurrencyManager.CHATTERS_URL % self.__channel) as c:
-            content = c.read()
-        jo = json.loads(content.decode())
-        chatters = []
-        [chatters.extend(x) for x in jo["chatters"].values()]
-
         # process viewer lists
         start = time.clock()
+
+        chatters = []
+        [chatters.extend(x) for x in self.__chatters.values()]
 
         self.__data_manager.process_chatters_list(chatters, currency_amount)
 
@@ -253,11 +325,12 @@ class CurrencyManager:
 
         # end
         print("\033[34;1m{" + datetime.datetime.now().strftime("%H:%M:%S") +
-              "} Currency given to %s viewers\033[0m" % jo["chatter_count"])
-        self.__connection.add_raw_msg("PRIVMSG #%s :%s" % (self.__channel, msg))
+              "} Currency given to %s viewers\033[0m" % len(chatters))
+        self.__connection.add_chat_msg(msg)
 
     def close(self):
         print("DEBUG: Currency System closing")
+        self.__bot.get_heartbeat_manager().remove_observer(self)
         self.__stop.set()
         self.__currency_thread.join()
 

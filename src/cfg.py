@@ -31,7 +31,7 @@ config = {
     "plugins": {
         "load_plugins": True,
         "custom_load_order": ["gui_user_input"],    # <- loads those plugins in order first then the others found
-        "disabled_plugins": ["print_raw"],
+        "disabled_plugins": ["print_raw", "print_messages"],
     },
     "plugin_settings": {
         "lang_t2s": 'en',
@@ -39,9 +39,13 @@ config = {
         "enable_gui_emotes": True,
         "enable_gui_badges": True,
     },
+    "heartbeat": {
+        "enabled": True,
+        "interval": 300,
+    },
     "currency": {
-        "enabled": False,
-        "interval": 300,                        # <- in sec
+        "enabled": True,
+        "interval": 60,                        # <- in sec
         "amount": 1,
         "message": "I'm laughing straight to the bank with this (Ha, ha ha ha ha ha, ha, ha ha ha ha ha)"
     },

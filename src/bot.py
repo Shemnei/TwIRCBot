@@ -41,6 +41,9 @@ class Bot:
         self.__plugin_manager.load_plugins()
         self.__currency_manager = managers.CurrencyManager(self)
         self.__currency_manager.load_settings()
+        self.__heartbeat_manager = managers.HeartbeatManager(self)
+        self.__heartbeat_manager.load_settings()
+        self.__heartbeat_manager.add_observer(self.__currency_manager)
 
     def start(self):
         # ansi color support for cmd
@@ -48,6 +51,7 @@ class Bot:
 
         self.__distribution_manager.start()
         self.__connection.connect()
+        self.__heartbeat_manager.start()
         self.__currency_manager.start()
         self.__cron_task.start()
         self.__running = True
@@ -66,10 +70,12 @@ class Bot:
         print("DEBUG: Bot shutting down")
         self.__running = False
         self.__currency_manager.close()
+        self.__heartbeat_manager.close()
         self.__cron_task.close()
         self.__distribution_manager.close()
         self.__plugin_manager.close()
         self.__connection.close()
+        self.__data_manager.close()
 
     def get_data_manager(self):
         return self.__data_manager
@@ -88,6 +94,9 @@ class Bot:
 
     def get_currency_manager(self):
         return self.__currency_manager
+
+    def get_heartbeat_manager(self):
+        return self.__heartbeat_manager
 
 if __name__ == '__main__':
     bot = Bot(cfg.config)

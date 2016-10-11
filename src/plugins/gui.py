@@ -32,6 +32,7 @@ class IRCPlugin(master.GenericPlugin):
         self.auto_scroll = None
 
         self.loaded_emotes = {}
+        self.loaded_static_badges = {}
         self.loaded_badges = {}
 
         self.message_display_enabled = None
@@ -86,9 +87,13 @@ class IRCPlugin(master.GenericPlugin):
             if emote_id == "80393":
                 print("GOLDEN KAPPA")
             if emote_id not in self.loaded_emotes:
-                data = urllib.request.urlopen(self.EMOTE_URL % emote_id).read()
-                stream = io.BytesIO(data)
-                self.loaded_emotes[emote_id] = ImageTk.PhotoImage(Image.open(stream))
+                try:
+                    data = urllib.request.urlopen(self.EMOTE_URL % emote_id).read()
+                    stream = io.BytesIO(data)
+                    self.loaded_emotes[emote_id] = ImageTk.PhotoImage(Image.open(stream))
+                except:
+                    # Error during fetch
+                    pass
 
     @staticmethod
     def parse_emotes(emotes_str):
@@ -146,15 +151,13 @@ class IRCPlugin(master.GenericPlugin):
         self.gui_root.wm_title(
             "TwIRC - [Active plugins: %i/%s]" % (self.nr_loaded_plugins, new_channel))
 
-    def load_badges(self, channel):
-        self.loaded_badges.clear()
+    def __load_static_badges(self):
         try:
             data = urllib.request.urlopen(self.GENERIC_BADGE_URL).read()
             j_data = json.loads(data.decode())
 
             for k in j_data["badge_sets"].keys():
                 for v in j_data["badge_sets"][k]["versions"]:
-                    try:
                         url = j_data["badge_sets"][k]["versions"][v]["image_url_1x"]
                         data = urllib.request.urlopen(url).read()
                         stream = io.BytesIO(data)
@@ -163,23 +166,30 @@ class IRCPlugin(master.GenericPlugin):
                             key = "moderator"
                         if k == "bits":
                             key += "/" + str(v)
-                        self.loaded_badges[key] = ImageTk.PhotoImage(Image.open(stream))
-                    except Exception as e:
-                        pass
+                        self.loaded_static_badges[key] = ImageTk.PhotoImage(Image.open(stream))
+        except:
+            pass
 
+    def load_badges(self, channel):
+        self.loaded_badges.clear()
+
+        if not self.loaded_static_badges:
+            self.__load_static_badges()
+
+        self.loaded_badges = self.loaded_static_badges.copy()
+        try:
             data = urllib.request.urlopen(self.CHANNEL_BADGE_URL % (channel, self.bot.get_config_manager()["connection"]["client_id"])).read()
             j_data = json.loads(data.decode())
 
             for k in j_data.keys():
-                try:
-                    url = j_data[k]["image"]
-                    data = urllib.request.urlopen(url).read()
-                    stream = io.BytesIO(data)
-                    if k == "mod":
-                        k = "moderator"
-                    self.loaded_badges[k] = ImageTk.PhotoImage(Image.open(stream))
-                except Exception as e:
-                    pass
+
+                url = j_data[k]["image"]
+                data = urllib.request.urlopen(url).read()
+                stream = io.BytesIO(data)
+                if k == "mod":
+                    k = "moderator"
+                self.loaded_badges[k] = ImageTk.PhotoImage(Image.open(stream))
+
         except:
             pass
 
@@ -191,40 +201,40 @@ class IRCPlugin(master.GenericPlugin):
         self.gui_root = root
 
         if self.message_display_enabled:
-            TW = tkinter.Text(wrap=tkinter.WORD)
-            TW.config(state=tkinter.DISABLED)
-            TW.grid(row=0, column=0, rowspan=8, columnspan=9)
-            self.text_field = TW
+            chat_text = tkinter.Text(wrap=tkinter.WORD)
+            chat_text.config(state=tkinter.DISABLED)
+            chat_text.grid(row=0, column=0, rowspan=8, columnspan=9)
+            self.text_field = chat_text
 
-        LC = tkinter.Label(root, text="CMD: ")
-        LC.grid(row=9, column=0)
-        EC = tkinter.Entry(root, width=30)
-        EC.grid(row=9, column=1, columnspan=3)
-        ToolTip.ToolTip(EC, "Enter command")
+        command_label = tkinter.Label(root, text="CMD: ")
+        command_label.grid(row=9, column=0)
+        command_entry = tkinter.Entry(root, width=30)
+        command_entry.grid(row=9, column=1, columnspan=3)
+        ToolTip.ToolTip(command_entry, "Enter command")
 
-        EC.bind("<Return>", self.cmd_handle_return)
-        EC.bind("<Up>", self.cmd_handle_up)
-        EC.bind("<Down>", self.cmd_handle_down)
+        command_entry.bind("<Return>", self.cmd_handle_return)
+        command_entry.bind("<Up>", self.cmd_handle_up)
+        command_entry.bind("<Down>", self.cmd_handle_down)
 
-        self.command_field = EC
+        self.command_field = command_entry
 
-        LM = tkinter.Label(root, text="MSG: ")
-        LM.grid(row=9, column=4)
-        EM = tkinter.Entry(root, width=30)
-        EM.grid(row=9, column=5, columnspan=3)
-        ToolTip.ToolTip(EM, "Enter chat massage")
+        message_label = tkinter.Label(root, text="MSG: ")
+        message_label.grid(row=9, column=4)
+        message_entry = tkinter.Entry(root, width=30)
+        message_entry.grid(row=9, column=5, columnspan=3)
+        ToolTip.ToolTip(message_entry, "Enter chat massage")
 
-        EM.bind("<Return>", self.msg_handle_return)
-        EM.bind("<Up>", self.msg_handle_up)
-        EM.bind("<Down>", self.msg_handle_down)
+        message_entry.bind("<Return>", self.msg_handle_return)
+        message_entry.bind("<Up>", self.msg_handle_up)
+        message_entry.bind("<Down>", self.msg_handle_down)
 
-        self.message_field = EM
+        self.message_field = message_entry
 
         if self.message_display_enabled:
             self.auto_scroll = tkinter.IntVar()
-            CB = tkinter.Checkbutton(root, text="AutoScroll", variable=self.auto_scroll, onvalue=1, offvalue=0)
-            CB.toggle()
-            CB.grid(row=9, column=8)
+            auto_scroll_checkbox = tkinter.Checkbutton(root, text="AutoScroll", variable=self.auto_scroll, onvalue=1, offvalue=0)
+            auto_scroll_checkbox.toggle()
+            auto_scroll_checkbox.grid(row=9, column=8)
 
         tkinter.mainloop()
 
@@ -233,12 +243,17 @@ class IRCPlugin(master.GenericPlugin):
         for part in msg:
             if part.startswith("{emote}"):
                 emote_id = part.replace("{emote}", "")
-                self.text_field.image_create(tkinter.END, image=self.loaded_emotes[emote_id])
+                try:
+                    self.text_field.image_create(tkinter.END, image=self.loaded_emotes[emote_id])
+                except:
+                    # emote not there
+                    pass
             elif part.startswith("{badge}"):
                 badge_id = part.replace("{badge}", "")
                 try:
                     self.text_field.image_create(tkinter.END, image=self.loaded_badges[badge_id])
                 except:
+                    # badge not there
                     pass
             else:
                 try:
