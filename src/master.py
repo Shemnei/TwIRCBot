@@ -1,3 +1,6 @@
+import time
+
+
 class Plugin:
 
     def __init__(self):
@@ -37,14 +40,6 @@ class Plugin:
         """Gets called when bot/connection is closed"""
         print("Closing [%s]" % self.__module__)
 
-    def get_description(self):
-        """
-        For now only needed for commands (cmd_name.py), used for the help command.
-        syntax: !command_name args - description
-        :return: info about command usage
-        """
-        return "not implemented"
-
     def on_channel_change(self, new_channel):
         """
         Called whenever the bot switches channel.
@@ -55,6 +50,7 @@ class Plugin:
 
 class FilterPlugin(Plugin):
 
+    FILTER = "ni"
     DESCRIPTION = "ni"
     PERMISSION_LEVEL = 0        # <- if your level higher then filter wont affect message
 
@@ -63,26 +59,51 @@ class FilterPlugin(Plugin):
 
     def on_load(self, bot):
         super().on_load(bot)
+        self.plugin_manager.register_filter(self.FILTER, self.DESCRIPTION, self.PERMISSION_LEVEL)
         print("+Filter %s loaded" % self.__module__)
 
 
 class CommandPlugin(Plugin):
 
     COMMAND = "ni"
+    ARGS = ""
     DESCRIPTION = "ni"
-    ADD_TO_HELP = False
     PERMISSION_LEVEL = 0        # <- your level needs to same or higher to execute command
+    ADD_TO_HELP = False
+
     COOL_DOWN = 0
+    IS_COOL_DOWN_GLOBAL = False
 
     def __init__(self):
         super().__init__()
+        self.__user_calls = {}
+        self.__last_global_call = None
+
+    def is_valid_request(self, user):
+        if self.IS_COOL_DOWN_GLOBAL:
+
+            valid = False
+            if not self.__last_global_call or (time.time() - self.__last_global_call >= self.COOL_DOWN
+                                               and user[1] >= self.PERMISSION_LEVEL):
+                valid = True
+                self.__last_global_call = time.time()
+            return valid
+
+        else:
+            user_last_call = self.__user_calls.get(user[0], 0)
+            if time.time() - user_last_call >= self.COOL_DOWN and user[1] >= self.PERMISSION_LEVEL:
+                self.__user_calls[user[0]] = time.time()
+                return True
+            return False
 
     def on_load(self, bot):
         super().on_load(bot)
+        self.plugin_manager.register_command(self.COMMAND, self.ARGS, self.DESCRIPTION, self.PERMISSION_LEVEL,
+                                             self.ADD_TO_HELP)
         print("+Command %s loaded" % self.__module__)
 
     def get_usage(self):
-        return "not implemented"
+        return self.COMMAND + " " + self.ARGS + " - " + self.DESCRIPTION
 
 
 class GenericPlugin(Plugin):

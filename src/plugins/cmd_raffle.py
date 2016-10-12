@@ -7,6 +7,12 @@ import master
 
 class IRCPlugin(master.CommandPlugin):
 
+    COMMAND = "!raffle"
+    ARGS = "[start/close/join] (time_to_auto_close)"
+    DESCRIPTION = "Opens a raffle to draw a random winner"
+    PERMISSION_LEVEL = 0
+    ADD_TO_HELP = True
+
     def __init__(self):
         super().__init__()
         self.__running = False
@@ -80,6 +86,3 @@ class IRCPlugin(master.CommandPlugin):
         time.sleep(countdown)
         if raffle_id == self.__id:
             self.connection.add_received_msg("!raffle close")
-
-    def get_description(self):
-        return "!raffle [start/close/join] (time_to_auto_close) - Opens a raffle to draw a random winner"

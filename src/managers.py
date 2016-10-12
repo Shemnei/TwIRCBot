@@ -2,6 +2,7 @@ import collections
 import datetime
 import enum
 import json
+import math
 import os
 import queue
 import re
@@ -15,8 +16,14 @@ import master
 
 
 class PluginManager:
+
+    Command = collections.namedtuple("Command", ["cmd", "args", "description", "perm_lvl", "add_to_help"])
+    Filter = collections.namedtuple("Filter", ["filter", "description", "perm_lvl"])
+
     def __init__(self, bot):
         self.__loaded_plugins = []
+        self.__registered_commands = []
+        self.__registered_filters = []
 
         self.__config = bot.get_config_manager()
         self.__connection = bot.get_connection()
@@ -78,6 +85,22 @@ class PluginManager:
 
         print("DEBUG: Plugins Loaded in %fms" % ((time.time() - start_load_plugins) * 1000))
 
+    def register_command(self, cmd, args, description, perm_lvl=0, add_to_help=True):
+        cmds = [x.cmd for x in self.__registered_commands]
+        if cmd not in cmds:
+            self.__registered_commands.append(self.Command(cmd, args, description, perm_lvl, add_to_help))
+
+    def register_filter(self, filter, description, perm_lvl=0):
+        filters = [x.filter for x in self.__registered_filters]
+        if filter not in filters:
+            self.__registered_filters.append(self.Filter(filter, description, perm_lvl))
+
+    def get_registered_commands(self):
+        return self.__registered_commands[:]
+
+    def get_registered_filters(self):
+        return self.__registered_filters[:]
+
     def get_loaded_plugins(self):
         return self.__loaded_plugins[:]
 
@@ -97,6 +120,7 @@ class MessageDistributor:
 
         self.__bot = bot
         self.__data_manager = bot.get_data_manager()
+        self.__config = bot.get_config_manager()
 
         self.__loaded_plugins = None
 
@@ -141,9 +165,9 @@ class MessageDistributor:
         else:
             user_name = parts[0 + offset][1:index]
         if user_name.startswith(':'):
-            user = (user_name, 0, 0)
+            user = [user_name, 0, 0]
         else:
-            user = self.__data_manager.get_user(user_name)
+            user = list(self.__data_manager.get_user(user_name))
 
         cmd = parts[1 + offset]
 
@@ -171,6 +195,7 @@ class MessageDistributor:
 
     def start(self):
         print("DEBUG: Distributor starting")
+
         self.__running = True
         self.__loaded_plugins = self.__bot.get_plugin_manager().get_loaded_plugins()
         self.__distribution_thread.start()
@@ -196,7 +221,6 @@ class HeartbeatManager(master.Observable):
         self.__stored_chatters = {}
         self.__last_updated = None
 
-        self.__enabled = None
         self.__channel = None
         self.__interval = None
 
@@ -204,15 +228,17 @@ class HeartbeatManager(master.Observable):
         self.__stop = threading.Event()
 
     def load_settings(self):
-        self.__enabled = self.__config["heartbeat"]["enabled"]
         self.__channel = self.__config["connection"]["channel"]
-        self.__interval = int(self.__config["heartbeat"]["interval"]) or 300
+        if self.__config["currency"]["enabled"]:
+            self.__interval = int(self.__config["currency"]["interval"]) or 300
+        else:
+            self.__interval = 300
 
     def reload_settings(self):
         print("DEBUG: Heartbeat System reloading")
         self.load_settings()
 
-        if not self.__enabled and self.__heartbeat_thread and self.__heartbeat_thread.is_alive():
+        if self.__heartbeat_thread and self.__heartbeat_thread.is_alive():
             self.close()
 
         elif self.__heartbeat_thread and not self.__heartbeat_thread.is_alive():
@@ -223,9 +249,6 @@ class HeartbeatManager(master.Observable):
         self.__heartbeat_thread.start()
 
     def __heartbeat_routine(self):
-        if not self.__enabled:
-            print("DEBUG: Heartbeat System disabled")
-            return
         try:
             print("DEBUG: Heartbeat System starting")
             self.__running = True
@@ -237,9 +260,9 @@ class HeartbeatManager(master.Observable):
                 self.__chatter_count = json_obj["chatter_count"]
                 self.__stored_chatters = json_obj["chatters"]
 
-                print("-- FETCHED LIST WITH %s ENTRIES ---" % self.__chatter_count)
+                print("-- FETCHED CHATTERS WITH %s ENTRIES ---" % self.__chatter_count)
 
-                self.notify_observers(None)
+                self.notify_observers("chatters")
 
                 self.__stop.wait(self.__interval)
 
@@ -272,10 +295,6 @@ class CurrencyManager(master.Observer):
         self.__message = None
         self.__chatters = {}
 
-        self.__running = False
-        self.__stop = threading.Event()
-        self.__currency_thread = None
-
     def load_settings(self):
         self.__enabled = self.__config["currency"]["enabled"]
         self.__interval = int(self.__config["currency"]["interval"]) or 300
@@ -286,31 +305,12 @@ class CurrencyManager(master.Observer):
         print("DEBUG: Currency System reloading")
         self.load_settings()
 
-        if not self.__enabled and self.__currency_thread and self.__currency_thread.is_alive():
-            self.close()
-
-        elif self.__currency_thread and not self.__currency_thread.is_alive():
-            self.start()
-
-    def start(self):
-        self.__currency_thread = threading.Thread(target=self.__currency_routine, name="currency_thread")
-        self.__currency_thread.start()
-
     def update(self, observable, args):
-        self.__chatters = observable.get_chatters_list()
-
-    def __currency_routine(self):
-        if not self.__enabled:
-            print("DEBUG: Currency System disabled")
-            return
-        try:
-            print("DEBUG: Currency System starting")
-            self.__running = True
-            while not self.__stop.wait(1):
-                self.__stop.wait(self.__interval)
-                self.add_currency(self.__amount, self.__message)
-        finally:
-            self.__running = False
+        if args == "chatters":
+            self.__chatters = observable.get_chatters_list()
+            if self.__enabled and self.__amount != 0:
+                threading.Thread(target=self.add_currency, args=(self.__amount, self.__message),
+                                 name="currency_thread").start()
 
     def add_currency(self, currency_amount, msg):
         # process viewer lists
@@ -331,8 +331,87 @@ class CurrencyManager(master.Observer):
     def close(self):
         print("DEBUG: Currency System closing")
         self.__bot.get_heartbeat_manager().remove_observer(self)
-        self.__stop.set()
-        self.__currency_thread.join()
+
+
+class CronManager:
+
+    CronJob = collections.namedtuple("CronJob", ["interval", "channel", "message", "ignore_silent_mode"])
+
+    def __init__(self, bot):
+        super().__init__()
+
+        self.__config_manager = bot.get_config_manager()
+        self.__connection = bot.get_connection()
+
+        self.__max_sleep_time = None
+        self.__cron_jobs = None
+        self.__loaded_cron_cfg = None
+        self.__running = False
+        self.__cron_thread = None
+
+        self.stop = threading.Event()
+
+    def load_cron_jobs(self):
+        self.__cron_jobs = []
+        self.__max_sleep_time = None
+
+        intervals = []
+        for job in self.__config_manager["cron"].values():
+            if job["enabled"]:
+                self.__cron_jobs.append(self.CronJob(job["interval"],
+                                                     job["channel"],
+                                                     job["message"],
+                                                     job.get("ignore_silent_mode", False)))
+                intervals.append(job["interval"])
+        self.__cron_jobs.sort(key=lambda x: x.interval)
+
+        smallest_interval = 0
+        for i in intervals:
+            if smallest_interval is None:
+                smallest_interval = i
+            else:
+                smallest_interval = math.gcd(smallest_interval, i)
+
+        self.__max_sleep_time = smallest_interval
+        print("DEBUG: Cron sleep time set to %is" % self.__max_sleep_time)
+
+    def reload_jobs(self):
+        print("DEBUG: Cron jobs reloading")
+        self.load_cron_jobs()
+        if self.__cron_thread and not self.__cron_thread.is_alive():
+            self.start()
+
+    def start(self):
+        print("DEBUG: Cron starting")
+        self.__cron_thread = threading.Thread(target=self.__cron_routine, name="cron_thread")
+        self.__cron_thread.start()
+
+    def __cron_routine(self):
+        if not self.__cron_jobs or len(self.__cron_jobs) == 0:
+            print("DEBUG: Cron stopped [no jobs]")
+            return
+        time_slept = 0
+        try:
+            self.__running = True
+            while not self.stop.wait(1):
+                self.stop.wait(self.__max_sleep_time)
+                time_slept += self.__max_sleep_time
+                for cj in self.__cron_jobs:
+                    if float(time_slept/cj.interval).is_integer():
+                        self.__connection.add_raw_msg("PRIVMSG #%s :%s" % (cj.channel, cj.message),
+                                                      cj.ignore_silent_mode)
+
+                        print("\033[34;1m{" + datetime.datetime.now().strftime("%H:%M:%S")
+                              + "} Cron job executed [%s/%i]\033[0m" % (cj.channel, cj.interval))
+                if self.__cron_jobs[-1].interval <= time_slept:
+                    time_slept = 0
+        finally:
+                self.__running = False
+
+    def close(self):
+        print("DEBUG: Cron closing")
+        self.stop.set()
+        self.__cron_thread.join()
 
 
 class DataManager:

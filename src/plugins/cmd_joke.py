@@ -1,10 +1,15 @@
 import random
-import time
 
 import master
 
 
 class IRCPlugin(master.CommandPlugin):
+
+    COMMAND = "!joke"
+    ARGS = ""
+    DESCRIPTION = "Tells a joke"
+    PERMISSION_LEVEL = 0
+    ADD_TO_HELP = True
 
     COOL_DOWN = 5
 
@@ -23,16 +28,11 @@ class IRCPlugin(master.CommandPlugin):
 
     def __init__(self):
         super().__init__()
-        self.__last_used = None
         random.seed()
 
     def get_regex(self):
         return r"PRIVMSG #\w+ :!joke$"
 
     def cmd(self, message):
-        if not self.__last_used or (time.time() - self.__last_used > IRCPlugin.COOL_DOWN):
+        if self.is_valid_request(message.user):
             self.connection.add_chat_msg(random.choice(IRCPlugin.JOKES))
-            self.__last_used = time.time()
-
-    def get_description(self):
-        return "!jokes - Tells a joke"

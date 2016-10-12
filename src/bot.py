@@ -4,7 +4,6 @@ import time
 
 import cfg
 import connection
-import cron
 import managers
 
 
@@ -35,8 +34,8 @@ class Bot:
         self.__data_manager.setup_database()
         self.__distribution_manager = managers.MessageDistributor(self)
         self.__connection = connection.IRCConnection(self)
-        self.__cron_task = cron.CronTask(self)
-        self.__cron_task.load_cron_jobs()
+        self.__cron_manager = managers.CronManager(self)
+        self.__cron_manager.load_cron_jobs()
         self.__plugin_manager = managers.PluginManager(self)
         self.__plugin_manager.load_plugins()
         self.__currency_manager = managers.CurrencyManager(self)
@@ -52,8 +51,7 @@ class Bot:
         self.__distribution_manager.start()
         self.__connection.connect()
         self.__heartbeat_manager.start()
-        self.__currency_manager.start()
-        self.__cron_task.start()
+        self.__cron_manager.start()
         self.__running = True
 
         while self.__running:
@@ -71,7 +69,7 @@ class Bot:
         self.__running = False
         self.__currency_manager.close()
         self.__heartbeat_manager.close()
-        self.__cron_task.close()
+        self.__cron_manager.close()
         self.__distribution_manager.close()
         self.__plugin_manager.close()
         self.__connection.close()

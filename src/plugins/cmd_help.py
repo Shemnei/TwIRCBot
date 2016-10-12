@@ -1,10 +1,13 @@
-import os
-import time
-
 import master
 
 
 class IRCPlugin(master.CommandPlugin):
+
+    COMMAND = "!help"
+    ARGS = "(command)"
+    DESCRIPTION = "Gives info about all loaded commands or a specific one"
+    PERMISSION_LEVEL = 0
+    ADD_TO_HELP = True
 
     COOL_DOWN = 10
 
@@ -20,47 +23,39 @@ class IRCPlugin(master.CommandPlugin):
     }
 
     def __init__(self):
-        master.Plugin.__init__(self)
+        super().__init__()
         self.__plugins = None
-        self.__last_used = None
 
     def get_regex(self):
         return r"PRIVMSG #\w+ :!help($| )"
 
     def cmd(self, message):
-        if not self.__last_used or (time.time() - self.__last_used > IRCPlugin.COOL_DOWN):
+        if self.__plugins is None:
+            self.__plugins = self.plugin_manager.get_registered_commands()
+        if self.is_valid_request(message.user):
             plugin = message.msg[6:].lower().strip()
-            filer_str = "cmd_" + plugin
+            filer_str = plugin
             out = []
-            filtered = filter(lambda module: filer_str in module[1].__module__, enumerate(self.__plugins))
+            filtered = filter(lambda module: filer_str in module.cmd and module.add_to_help
+                                             and message.user[1] >= module.perm_lvl, self.__plugins)
             if plugin:
                 using = IRCPlugin.specific
             else:
                 using = IRCPlugin.all
 
             for m in list(filtered):
-                f = getattr(m[1], "get_description", using["not_implemented"])
-                if isinstance(f, str):
-                    out.append(f % os.path.basename(m[1].__module__))
+                if plugin:
+                    tmp = m.cmd + " " + m.args + " - " + m.description
                 else:
-                    if plugin:
-                        tmp = f()
-                    else:
-                        tmp = f().split()[0]
-                    out.append(tmp)
+                    tmp = m.cmd
+                out.append(tmp)
             if len(out):
                 self.connection.add_chat_msg(using["msg"] + ", ".join(out))
             else:
                 self.connection.add_chat_msg(using["none_found"] % plugin)
 
-            self.__last_used = time.time()
-
     def on_load(self, bot):
         super().on_load(bot)
-        self.__plugins = self.plugin_manager.get_loaded_plugins()
 
     def on_refresh(self):
         self.__plugins = self.plugin_manager.get_loaded_plugins()
-
-    def get_description(self):
-        return "!help (command) - Gives info about all loaded commands or a specific one"

@@ -9,6 +9,12 @@ import master
 
 class IRCPlugin(master.CommandPlugin):
 
+    COMMAND = "!uptime"
+    ARGS = ""
+    DESCRIPTION = "Stream uptime"
+    PERMISSION_LEVEL = 0
+    ADD_TO_HELP = True
+
     COOL_DOWN = 10
     BASE_URL = "https://api.twitch.tv/kraken/streams/%s?client_id=%s"
 
@@ -17,13 +23,12 @@ class IRCPlugin(master.CommandPlugin):
         self.__current_stream_start = None
         self.__current_channel = None
         self.__last_fetched = None
-        self.__last_used = None
 
     def get_regex(self):
         return r"PRIVMSG #\w+ :!uptime$"
 
     def cmd(self, message):
-        if not self.__last_used or (time.time() - self.__last_used > IRCPlugin.COOL_DOWN):
+        if self.is_valid_request(message.user):
 
             if not self.__current_stream_start:
                 print("Uptime: Offline")
@@ -35,8 +40,6 @@ class IRCPlugin(master.CommandPlugin):
 
             if time.time() - self.__last_fetched > 300:
                 threading.Thread(name="uptime_request_thread", target=self.__get_stream_uptime).start()
-
-            self.__last_used = time.time()
 
     def __get_stream_uptime(self):
         data = urllib.request.urlopen(IRCPlugin.BASE_URL % (self.__current_channel,

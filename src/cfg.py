@@ -39,13 +39,9 @@ config = {
         "enable_gui_emotes": True,
         "enable_gui_badges": True,
     },
-    "heartbeat": {
-        "enabled": True,
-        "interval": 300,
-    },
     "currency": {
-        "enabled": True,
-        "interval": 60,                        # <- in sec
+        "enabled": False,
+        "interval": 300,                        # <- in sec
         "amount": 1,
         "message": "I'm laughing straight to the bank with this (Ha, ha ha ha ha ha, ha, ha ha ha ha ha)"
     },

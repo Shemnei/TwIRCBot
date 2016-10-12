@@ -5,6 +5,12 @@ import master
 
 class IRCPlugin(master.CommandPlugin):
 
+    COMMAND = "!add_cur"
+    ARGS = "[all/user] [amount] (msg)"
+    DESCRIPTION = "Adds specified amount to all or specific users"
+    PERMISSION_LEVEL = 3
+    ADD_TO_HELP = True
+
     def get_regex(self):
         return r"PRIVMSG #\w+ :!add_cur \w+ \d+"
 
@@ -25,6 +31,3 @@ class IRCPlugin(master.CommandPlugin):
             else:
                 self.data_manager.add_user_currency(target, amount)
                 self.connection.add_chat_msg(msg)
-
-    def get_description(self):
-        return "!add_cur [all/user] [amount] (msg) - Adds specified amount to all or specific users"

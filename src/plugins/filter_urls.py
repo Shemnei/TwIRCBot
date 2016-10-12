@@ -3,7 +3,12 @@ import re
 import master
 
 
-class IRCPlugin(master.Plugin):
+class IRCPlugin(master.FilterPlugin):
+
+    FILTER = "url_filter"
+    DESCRIPTION = "Filters urls and ip addresses"
+    PERMISSION_LEVEL = 3
+
     url_regex = [r"[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)",
                  r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"]
     message = "Links are not permitted %s => timeout"

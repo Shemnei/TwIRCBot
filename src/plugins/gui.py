@@ -16,6 +16,7 @@ class IRCPlugin(master.GenericPlugin):
     EMOTE_URL = "http://static-cdn.jtvnw.net/emoticons/v1/%s/1.0"
     GENERIC_BADGE_URL = "http://badges.twitch.tv/v1/badges/global/display"
     CHANNEL_BADGE_URL = "https://api.twitch.tv/kraken/chat/%s/badges?client_id=%s"
+    CHEER_URL = "static-cdn.jtvnw.net/bits/light/static/%color/1"
     HISTORY_SIZE = 20
 
     def __init__(self):
@@ -178,7 +179,8 @@ class IRCPlugin(master.GenericPlugin):
 
         self.loaded_badges = self.loaded_static_badges.copy()
         try:
-            data = urllib.request.urlopen(self.CHANNEL_BADGE_URL % (channel, self.bot.get_config_manager()["connection"]["client_id"])).read()
+            data = urllib.request.urlopen(self.CHANNEL_BADGE_URL %
+                                          (channel, self.bot.get_config_manager()["connection"]["client_id"])).read()
             j_data = json.loads(data.decode())
 
             for k in j_data.keys():
@@ -232,7 +234,8 @@ class IRCPlugin(master.GenericPlugin):
 
         if self.message_display_enabled:
             self.auto_scroll = tkinter.IntVar()
-            auto_scroll_checkbox = tkinter.Checkbutton(root, text="AutoScroll", variable=self.auto_scroll, onvalue=1, offvalue=0)
+            auto_scroll_checkbox = tkinter.Checkbutton(root, text="AutoScroll", variable=self.auto_scroll,
+                                                       onvalue=1, offvalue=0)
             auto_scroll_checkbox.toggle()
             auto_scroll_checkbox.grid(row=9, column=8)
 
