@@ -39,5 +39,5 @@ class IRCPlugin(master.CommandPlugin):
     def cmd(self, message):
         if self.is_valid_request(message.user):
             choice = random.choice(self.JOKES)
-            logger.log(logging.DEBUG, "@%s -> joke id:%i" % (message.user[0], self.JOKES.index(choice)))
+            logger.log(logging.DEBUG, "@%s -> joke id:%i" % (str(message.user), self.JOKES.index(choice)))
             self.connection.add_chat_msg(choice)

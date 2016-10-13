@@ -35,12 +35,12 @@ class IRCPlugin(master.CommandPlugin):
 
             if not self.__current_stream_start:
                 print("Uptime: Offline")
-                logger.log(logging.DEBUG, "@%s -> uptime [%s/offline]" % (message.user[0], self.__current_channel))
+                logger.log(logging.DEBUG, "@%s -> uptime [%s/offline]" % (str(message.user), self.__current_channel))
                 self.connection.add_chat_msg("Stream is offline")
             else:
                 current = datetime.datetime.fromtimestamp(time.mktime(time.gmtime())) - datetime.timedelta(hours=1)
                 diff = current - self.__current_stream_start
-                logger.log(logging.DEBUG, "@%s -> uptime [%s/%s]" % (message.user[0], self.__current_channel, diff))
+                logger.log(logging.DEBUG, "@%s -> uptime [%s/%s]" % (str(message.user), self.__current_channel, diff))
                 print("Uptime: %s" % diff)
                 self.connection.add_chat_msg("Stream online for: %s" % (current - self.__current_stream_start))
 
@@ -51,7 +51,7 @@ class IRCPlugin(master.CommandPlugin):
         logger.log(logging.DEBUG, "@uptime -> fetching uptime[%s]" % self.__current_channel)
         data = urllib.request.urlopen(IRCPlugin.BASE_URL % (self.__current_channel,
                                                             self.bot.get_config_manager()["connection"]["client_id"]))\
-                                                            .read()
+            .read()
         jo = json.loads(data.decode())
         if jo["stream"]:
             self.__current_stream_start = datetime.datetime.strptime(jo["stream"]["created_at"], "%Y-%m-%dT%H:%M:%SZ")

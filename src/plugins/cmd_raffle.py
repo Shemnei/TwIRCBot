@@ -36,7 +36,7 @@ class IRCPlugin(master.CommandPlugin):
             if args[0] == "start":
 
                 if self.__running:
-                    logger.log(logging.DEBUG, "@%s -> raffle start - raffle running" % message.user[0])
+                    logger.log(logging.DEBUG, "@%s -> raffle start - raffle running" % str(message.user))
                     self.connection.add_chat_msg("There is currently another raffle running!")
                 else:
                     self.__id += 1
@@ -45,17 +45,17 @@ class IRCPlugin(master.CommandPlugin):
                     self.connection.add_chat_msg("Raffle started! Join with !raffle join.")
                     if len(args) == 2 and args[1].isnumeric():
                         counter = int(args[1])
-                        logger.log(logging.DEBUG, "@%s -> raffle start self_closing:%i" % (message.user[0], counter))
+                        logger.log(logging.DEBUG, "@%s -> raffle start self_closing:%i" % (str(message.user), counter))
                         self.connection.add_chat_msg("Raffle self closing in %is" % counter)
                         threading.Thread(target=self.__self_closing_routine, args=(self.__id, counter),
                                          name="self_closing_raffle_thread").start()
                     else:
-                        logger.log(logging.DEBUG, "@%s -> raffle start" % message.user[0])
+                        logger.log(logging.DEBUG, "@%s -> raffle start" % str(message.user))
 
             elif args[0] == "close":
 
                 if self.__running:
-                    logger.log(logging.DEBUG, "@%s -> raffle close" % message.user[0])
+                    logger.log(logging.DEBUG, "@%s -> raffle close" % str(message.user))
                     self.__running = False
                     # removes identical records
                     self.__entries = list(set(self.__entries))
@@ -65,27 +65,27 @@ class IRCPlugin(master.CommandPlugin):
                         self.connection.add_chat_msg("Raffle ended! Drawing winner!")
                         self.__draw_and_handle_winner()
                 else:
-                    logger.log(logging.DEBUG, "@%s -> raffle close - no raffle running" % message.user[0])
+                    logger.log(logging.DEBUG, "@%s -> raffle close - no raffle running" % str(message.user))
                     self.connection.add_chat_msg("There is currently no raffle running!")
 
             elif args[0] == "draw_other":
 
                 if len(self.__entries) > 0 and not self.__running:
-                    logger.log(logging.DEBUG, "@%s -> raffle draw_other" % message.user[0])
+                    logger.log(logging.DEBUG, "@%s -> raffle draw_other" % str(message.user))
                     self.connection.add_chat_msg("Drawing another winner!")
                     self.__draw_and_handle_winner()
                 else:
-                    logger.log(logging.DEBUG, "@%s -> raffle draw_other - invalid" % message.user[0])
+                    logger.log(logging.DEBUG, "@%s -> raffle draw_other - invalid" % str(message.user))
                     self.connection.add_chat_msg("There are no entries or another raffle is already running!")
 
         if args[0] == "join":
 
             if self.__running:
-                logger.log(logging.DEBUG, "@%s -> raffle join" % message.user[0])
+                logger.log(logging.DEBUG, "@%s -> raffle join" % str(message.user))
                 self.connection.add_chat_msg(".w %s You entered the raffle!" % message.user[0])
                 self.__entries.append(message.user[0])
             else:
-                logger.log(logging.DEBUG, "@%s -> raffle join - no raffle running" % message.user[0])
+                logger.log(logging.DEBUG, "@%s -> raffle join - no raffle running" % str(message.user))
                 self.connection.add_chat_msg("There is currently no raffle running!")
 
     def __draw_and_handle_winner(self):

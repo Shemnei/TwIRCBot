@@ -3,7 +3,7 @@ import cfg_c
 config = {
     "paths": {
         "plugin_dir": "plugins",
-        "logs_dir": "logs",
+        "log_dir": "logs",
     },
     "connection": {
         "server": "irc.chat.twitch.tv",
@@ -12,7 +12,7 @@ config = {
         "nick_name": cfg_c.USER,
         "oauth_token": cfg_c.OAUTH,
         "client_id": cfg_c.CLIENT,
-        "channel": "dansgaming",
+        "channel": "lirik",
         "msg_decoding": "utf-8",
         "msg_encoding": "utf-8",
         "timeout_between_msg": (20 / 30),
@@ -21,6 +21,13 @@ config = {
         "membership_messages": True,
         "tags": True,
         "commands": True
+    },
+    "logging": {
+        "enable_console_logging": True,
+        "console_log_level": 20,
+        "enable_file_logging": False,
+        "file_log_level": 10,
+        "log_format": "[%(asctime)s / %(name)s / %(levelname)s] %(message)s"
     },
     "general": {
         "join_msg": ".me up and running!",

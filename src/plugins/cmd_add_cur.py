@@ -5,6 +5,7 @@ import master
 
 logger = logging.getLogger(__name__)
 
+
 class IRCPlugin(master.CommandPlugin):
 
     COMMAND = "!add_cur"
@@ -27,11 +28,11 @@ class IRCPlugin(master.CommandPlugin):
             amount = int(args[1])
             msg = " ".join(args[2:])
             if target == "all":
-                logger.log(logging.DEBUG, "@%s - add_cur all %i" % (message.user[0], amount))
+                logger.log(logging.DEBUG, "@%s - add_cur all %i" % (str(message.user), amount))
                 t = threading.Thread(target=self.bot.get_currency_manager().add_currency, args=(amount, msg),
                                      name="cmd_add_currency_thread")
                 t.start()
             else:
-                logger.log(logging.DEBUG, "@%s -> add_cur %s %i" % (message.user[0], target, amount))
+                logger.log(logging.DEBUG, "@%s -> add_cur %s %i" % (str(message.user), target, amount))
                 self.data_manager.add_user_currency(target, amount)
                 self.connection.add_chat_msg(msg)

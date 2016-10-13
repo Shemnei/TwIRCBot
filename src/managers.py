@@ -417,7 +417,7 @@ class CronManager:
 
 
 class DataManager:
-    DATABASE_NAME = "../users.db"
+    DATABASE_NAME = "users.db"
 
     @enum.unique
     class PermissionLevel(enum.IntEnum):

@@ -1,46 +1,61 @@
 import ctypes
 import datetime
 import logging
-from logging import handlers
+import os
 import platform
+import sys
 import time
+from logging import handlers
 
 import cfg
 import connection
 import managers
 
 
-# setting up logging
-FORMAT = '[%(asctime)s / %(name)s / %(levelname)s] %(message)s'
-
-file_handler = logging.handlers.RotatingFileHandler(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_botlog.txt")
-file_handler.setLevel(logging.DEBUG)
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.DEBUG)
-
-logging.basicConfig(format=FORMAT, level=logging.DEBUG, handlers=[file_handler, console_handler])
-
-pil_logger = logging.getLogger("PIL").setLevel(logging.WARNING)
-logger = logging.getLogger(__name__)
-#
-
-
-def enable_cmd_colors():
-    # Windows 10 build 10586: Added support to ANSI colors, enabled by default
-    # Windows 10 build 14393: ANSI colors are still supported, but not default
-    plt = platform.platform().split(".")
-    if plt[0] == "Windows-10" and int(plt[2]) >= 14393:
-        kernel32 = ctypes.windll.kernel32
-        kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
-        logger.log(logging.DEBUG, "Ansi escape sequence enabled [%s]" % platform.platform())
-
-
 class Bot:
 
-    def __init__(self, config):
-        self.__running = False
+    def enable_cmd_colors(self):
+        # Windows 10 build 10586: Added support to ANSI colors, enabled by default
+        # Windows 10 build 14393: ANSI colors are still supported, but not default
+        plt = platform.platform().split(".")
+        if plt[0] == "Windows-10" and int(plt[2]) >= 14393:
+            kernel32 = ctypes.windll.kernel32
+            kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
+            self.__logger.log(logging.DEBUG, "Ansi escape sequence enabled [%s]" % platform.platform())
 
-        logger.log(logging.INFO, "Bot init")
+    def __setup_logging(self):
+        log_dir = self.__cfg["paths"]["log_dir"]
+        if not os.path.isdir(log_dir):
+            os.makedirs(log_dir)
+
+        active_handlers = []
+
+        console_handler = logging.StreamHandler()
+        if self.__cfg["logging"]["enable_console_logging"]:
+            console_handler.setLevel(self.__cfg["logging"]["console_log_level"])
+        else:
+            console_handler.setLevel(sys.maxsize)
+        active_handlers.append(console_handler)
+
+        if self.__cfg["logging"]["enable_file_logging"]:
+            file_handler = logging.handlers.RotatingFileHandler(
+                os.path.join("logs", datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_botlog.txt"),
+                encoding="utf-8")
+            file_handler.setLevel(self.__cfg["logging"]["file_log_level"])
+            active_handlers.append(file_handler)
+
+        logging.basicConfig(format=self.__cfg["logging"]["log_format"], level=logging.DEBUG, handlers=active_handlers)
+
+        logging.getLogger("PIL").setLevel(logging.WARNING)
+        self.__logger = logging.getLogger(__name__)
+
+    def __init__(self, config):
+        self.__cfg = config
+        self.__running = False
+        self.__logger = None
+        self.__setup_logging()
+
+        self.__logger.log(logging.INFO, "Bot init")
 
         print(r" _______     _____ _____   _____ ____        _   ")
         print(r"|__   __|   |_   _|  __ \ / ____|  _ \      | |  ")
@@ -49,7 +64,6 @@ class Bot:
         print(r"   | |\ V  V /| |_| | \ \| |____| |_) | (_) | |_ ")
         print(r"   |_| \_/\_/_____|_|  \_\\_____|____/ \___/ \__|")
 
-        self.__cfg = config
         self.__data_manager = managers.DataManager(self)
         self.__data_manager.setup_database()
         self.__distribution_manager = managers.MessageDistributor(self)
@@ -65,9 +79,9 @@ class Bot:
         self.__heartbeat_manager.add_observer(self.__currency_manager)
 
     def start(self):
-        logger.log(logging.INFO, "Bot started")
+        self.__logger.log(logging.INFO, "Bot started")
         # ansi color support for cmd
-        enable_cmd_colors()
+        self.enable_cmd_colors()
 
         self.__distribution_manager.start()
         self.__connection.connect()
@@ -86,7 +100,8 @@ class Bot:
         self.__running = False
 
     def __close(self):
-        logger.log(logging.DEBUG, "Bot shutting down")
+        print("Bot closing")
+        self.__logger.log(logging.DEBUG, "Bot shutting down")
         self.__running = False
         self.__currency_manager.close()
         self.__heartbeat_manager.close()

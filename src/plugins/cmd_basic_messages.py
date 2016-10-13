@@ -23,7 +23,7 @@ class IRCPlugin(master.CommandPlugin):
             name = message.msg[1:]
             if name == "youtube":
                 self.connection.add_chat_msg("I am on youtube: www.youtube.com")
-                logger.log(logging.DEBUG, "@%s -> basic_message youtube" % message.user[0])
+                logger.log(logging.DEBUG, "@%s -> basic_message youtube" % str(message.user))
             elif name == "twitter":
                 self.connection.add_chat_msg("I am on twitter: www.twitter.com")
-                logger.log(logging.DEBUG, "@%s -> basic_message twitter" % message.user[0])
+                logger.log(logging.DEBUG, "@%s -> basic_message twitter" % str(message.user))

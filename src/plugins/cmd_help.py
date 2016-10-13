@@ -38,7 +38,7 @@ class IRCPlugin(master.CommandPlugin):
             self.__plugins = self.plugin_manager.get_registered_commands()
         if self.is_valid_request(message.user):
             plugin = message.msg[6:].lower().strip()
-            logger.log(logging.DEBUG, "@%s -> help %s" % (message.user[0], plugin))
+            logger.log(logging.DEBUG, "@%s -> help %s" % (str(message.user), plugin))
             filer_str = plugin
             out = []
             filtered = filter(lambda module: filer_str in module.cmd and module.add_to_help

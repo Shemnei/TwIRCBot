@@ -19,5 +19,5 @@ class IRCPlugin(master.CommandPlugin):
     def cmd(self, message):
         if message.user[0] == self.config["connection"]["nick_name"].lower()\
                 or message.user[0] == self.config["connection"]["channel"].lower():
-            logger.log(logging.DEBUG, "@%s -> close" % message.user[0])
+            logger.log(logging.DEBUG, "@%s -> close" % str(message.user))
             self.bot.stop()

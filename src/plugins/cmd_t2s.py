@@ -31,7 +31,7 @@ class IRCPlugin(master.CommandPlugin):
         if self.is_valid_request(message.user):
             text = message.msg[5:]
             if len(text) > 0:
-                logger.log(logging.DEBUG, "@%s -> t2s %s" % (message.user[0], message))
+                logger.log(logging.DEBUG, "@%s -> t2s %s" % (str(message.user), message))
                 threading.Thread(target=self.text_2_speech, args=(message,), name="text_to_speech_thread").start()
 
     def text_2_speech(self, text):

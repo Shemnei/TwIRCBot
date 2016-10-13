@@ -1,5 +1,6 @@
-import master
 import logging
+
+import master
 
 logger = logging.getLogger(__name__)
 

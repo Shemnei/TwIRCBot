@@ -25,5 +25,5 @@ class IRCPlugin(master.CommandPlugin):
             if message.tags and message.tags.get("display-name", None):
                 user = message.tags["display-name"]
 
-            logger.log(logging.DEBUG, "@%s -> hello" % message.user[0])
+            logger.log(logging.DEBUG, "@%s -> hello" % str(message.user))
             self.connection.add_chat_msg("Hello there %s" % user)
