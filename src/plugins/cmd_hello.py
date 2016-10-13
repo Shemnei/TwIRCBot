@@ -1,4 +1,8 @@
+import logging
+
 import master
+
+logger = logging.getLogger(__name__)
 
 
 class IRCPlugin(master.CommandPlugin):
@@ -20,4 +24,6 @@ class IRCPlugin(master.CommandPlugin):
             user = message.user[0]
             if message.tags and message.tags.get("display-name", None):
                 user = message.tags["display-name"]
+
+            logger.log(logging.DEBUG, "@%s -> hello" % message.user[0])
             self.connection.add_chat_msg("Hello there %s" % user)

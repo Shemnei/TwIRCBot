@@ -1,4 +1,8 @@
+import logging
+
 import master
+
+logger = logging.getLogger(__name__)
 
 
 class IRCPlugin(master.CommandPlugin):
@@ -17,5 +21,5 @@ class IRCPlugin(master.CommandPlugin):
                 or message.user[0] == self.config["connection"]["channel"].lower():
 
             args = message.msg[9:].split()
-            print("DEBUG: Set permission level of %s to %s" % (args[0], args[1]))
+            logger.log(logging.DEBUG, "@%s -> setperm %s %s" % (message.user[0], args[0], args[1]))
             self.bot.get_data_manager().set_user_permlvl(args[0], int(args[1]))

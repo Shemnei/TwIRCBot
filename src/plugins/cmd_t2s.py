@@ -1,9 +1,12 @@
+import logging
 import os
 import threading
 
 import gtts
 
 import master
+
+logger = logging.getLogger(__name__)
 
 
 class IRCPlugin(master.CommandPlugin):
@@ -28,8 +31,8 @@ class IRCPlugin(master.CommandPlugin):
         if self.is_valid_request(message.user):
             text = message.msg[5:]
             if len(text) > 0:
+                logger.log(logging.DEBUG, "@%s -> t2s %s" % (message.user[0], message))
                 threading.Thread(target=self.text_2_speech, args=(message,), name="text_to_speech_thread").start()
-
 
     def text_2_speech(self, text):
         tts = gtts.gTTS(text=text, lang=self.__lang)

@@ -1,10 +1,28 @@
 import ctypes
+import datetime
+import logging
+from logging import handlers
 import platform
 import time
 
 import cfg
 import connection
 import managers
+
+
+# setting up logging
+FORMAT = '[%(asctime)s / %(name)s / %(levelname)s] %(message)s'
+
+file_handler = logging.handlers.RotatingFileHandler(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_botlog.txt")
+file_handler.setLevel(logging.DEBUG)
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
+
+logging.basicConfig(format=FORMAT, level=logging.DEBUG, handlers=[file_handler, console_handler])
+
+pil_logger = logging.getLogger("PIL").setLevel(logging.WARNING)
+logger = logging.getLogger(__name__)
+#
 
 
 def enable_cmd_colors():
@@ -14,13 +32,15 @@ def enable_cmd_colors():
     if plt[0] == "Windows-10" and int(plt[2]) >= 14393:
         kernel32 = ctypes.windll.kernel32
         kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
-        print("DEBUG: Ansi escape sequence enabled [%s]" % platform.platform())
+        logger.log(logging.DEBUG, "Ansi escape sequence enabled [%s]" % platform.platform())
 
 
 class Bot:
 
     def __init__(self, config):
         self.__running = False
+
+        logger.log(logging.INFO, "Bot init")
 
         print(r" _______     _____ _____   _____ ____        _   ")
         print(r"|__   __|   |_   _|  __ \ / ____|  _ \      | |  ")
@@ -45,6 +65,7 @@ class Bot:
         self.__heartbeat_manager.add_observer(self.__currency_manager)
 
     def start(self):
+        logger.log(logging.INFO, "Bot started")
         # ansi color support for cmd
         enable_cmd_colors()
 
@@ -65,7 +86,7 @@ class Bot:
         self.__running = False
 
     def __close(self):
-        print("DEBUG: Bot shutting down")
+        logger.log(logging.DEBUG, "Bot shutting down")
         self.__running = False
         self.__currency_manager.close()
         self.__heartbeat_manager.close()
@@ -95,6 +116,7 @@ class Bot:
 
     def get_heartbeat_manager(self):
         return self.__heartbeat_manager
+
 
 if __name__ == '__main__':
     bot = Bot(cfg.config)

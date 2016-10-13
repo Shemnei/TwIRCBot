@@ -1,4 +1,7 @@
+import logging
 import time
+
+logger = logging.getLogger(__name__)
 
 
 class Plugin:
@@ -38,7 +41,7 @@ class Plugin:
 
     def on_close(self):
         """Gets called when bot/connection is closed"""
-        print("Closing [%s]" % self.__module__)
+        logging.log(logging.INFO, "Closing [%s]" % self.__module__)
 
     def on_channel_change(self, new_channel):
         """
@@ -60,7 +63,7 @@ class FilterPlugin(Plugin):
     def on_load(self, bot):
         super().on_load(bot)
         self.plugin_manager.register_filter(self.FILTER, self.DESCRIPTION, self.PERMISSION_LEVEL)
-        print("+Filter %s loaded" % self.__module__)
+        logging.log(logging.INFO, "+Filter %s loaded" % self.__module__)
 
 
 class CommandPlugin(Plugin):
@@ -100,7 +103,7 @@ class CommandPlugin(Plugin):
         super().on_load(bot)
         self.plugin_manager.register_command(self.COMMAND, self.ARGS, self.DESCRIPTION, self.PERMISSION_LEVEL,
                                              self.ADD_TO_HELP)
-        print("+Command %s loaded" % self.__module__)
+        logging.log(logging.INFO, "+Command %s loaded" % self.__module__)
 
     def get_usage(self):
         return self.COMMAND + " " + self.ARGS + " - " + self.DESCRIPTION
@@ -113,7 +116,7 @@ class GenericPlugin(Plugin):
 
     def on_load(self, bot):
         super().on_load(bot)
-        print("+Plugin %s loaded" % self.__module__)
+        logging.log(logging.INFO, "+Plugin %s loaded" % self.__module__)
 
 
 class Observable:

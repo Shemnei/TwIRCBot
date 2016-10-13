@@ -1,6 +1,9 @@
+import logging
 import re
 
 import master
+
+logger = logging.getLogger(__name__)
 
 
 class IRCPlugin(master.FilterPlugin):
@@ -22,8 +25,7 @@ class IRCPlugin(master.FilterPlugin):
         for regex in IRCPlugin.url_regex:
             match = re.search(regex, message.msg)
             if match is not None:
-                print(match, end=" ")
-                print(message.user)
+                logger.log(logging.DEBUG, "%s - %s" % (match, message.user))
                 self.connection.add_chat_msg(IRCPlugin.message % message.user[0])
                 self.connection.add_chat_msg(IRCPlugin.command % message.user[0])
                 return

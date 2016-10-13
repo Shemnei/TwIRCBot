@@ -1,10 +1,13 @@
 import datetime
 import json
+import logging
 import threading
 import time
 import urllib.request
 
 import master
+
+logger = logging.getLogger(__name__)
 
 
 class IRCPlugin(master.CommandPlugin):
@@ -32,16 +35,20 @@ class IRCPlugin(master.CommandPlugin):
 
             if not self.__current_stream_start:
                 print("Uptime: Offline")
+                logger.log(logging.DEBUG, "@%s -> uptime [%s/offline]" % (message.user[0], self.__current_channel))
                 self.connection.add_chat_msg("Stream is offline")
             else:
                 current = datetime.datetime.fromtimestamp(time.mktime(time.gmtime())) - datetime.timedelta(hours=1)
-                print("Uptime: %s" % (current - self.__current_stream_start))
+                diff = current - self.__current_stream_start
+                logger.log(logging.DEBUG, "@%s -> uptime [%s/%s]" % (message.user[0], self.__current_channel, diff))
+                print("Uptime: %s" % diff)
                 self.connection.add_chat_msg("Stream online for: %s" % (current - self.__current_stream_start))
 
             if time.time() - self.__last_fetched > 300:
                 threading.Thread(name="uptime_request_thread", target=self.__get_stream_uptime).start()
 
     def __get_stream_uptime(self):
+        logger.log(logging.DEBUG, "@uptime -> fetching uptime[%s]" % self.__current_channel)
         data = urllib.request.urlopen(IRCPlugin.BASE_URL % (self.__current_channel,
                                                             self.bot.get_config_manager()["connection"]["client_id"]))\
                                                             .read()
@@ -57,6 +64,3 @@ class IRCPlugin(master.CommandPlugin):
         self.__current_stream_start = None
         self.__current_channel = new_channel
         threading.Thread(name="uptime_request_thread", target=self.__get_stream_uptime).start()
-
-    def get_description(self):
-        return "!uptime - Stream uptime"

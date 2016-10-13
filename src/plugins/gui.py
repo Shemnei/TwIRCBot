@@ -1,6 +1,7 @@
 import datetime
 import io
 import json
+import logging
 import threading
 import tkinter
 import urllib.request
@@ -10,6 +11,8 @@ from tkinter import messagebox
 from PIL import Image, ImageTk
 
 import master
+
+logger = logging.getLogger(__name__)
 
 
 class IRCPlugin(master.GenericPlugin):
@@ -86,15 +89,14 @@ class IRCPlugin(master.GenericPlugin):
     def load_emote_if_not_exists(self, emotes):
         for emote_id in emotes.keys():
             if emote_id == "80393":
-                print("GOLDEN KAPPA")
+                logger.log(logging.DEBUG, "@gui -> GOLDEN KAPPA")
             if emote_id not in self.loaded_emotes:
                 try:
                     data = urllib.request.urlopen(self.EMOTE_URL % emote_id).read()
                     stream = io.BytesIO(data)
                     self.loaded_emotes[emote_id] = ImageTk.PhotoImage(Image.open(stream))
-                except:
-                    # Error during fetch
-                    pass
+                except Exception as e:
+                    logger.exception("Emote loading")
 
     @staticmethod
     def parse_emotes(emotes_str):
@@ -168,8 +170,8 @@ class IRCPlugin(master.GenericPlugin):
                         if k == "bits":
                             key += "/" + str(v)
                         self.loaded_static_badges[key] = ImageTk.PhotoImage(Image.open(stream))
-        except:
-            pass
+        except Exception as e:
+            logger.exception("Static Badge loading")
 
     def load_badges(self, channel):
         self.loaded_badges.clear()
@@ -184,16 +186,16 @@ class IRCPlugin(master.GenericPlugin):
             j_data = json.loads(data.decode())
 
             for k in j_data.keys():
+                if j_data[k] and "image" in j_data[k]:
+                    url = j_data[k]["image"]
+                    data = urllib.request.urlopen(url).read()
+                    stream = io.BytesIO(data)
+                    if k == "mod":
+                        k = "moderator"
+                    self.loaded_badges[k] = ImageTk.PhotoImage(Image.open(stream))
 
-                url = j_data[k]["image"]
-                data = urllib.request.urlopen(url).read()
-                stream = io.BytesIO(data)
-                if k == "mod":
-                    k = "moderator"
-                self.loaded_badges[k] = ImageTk.PhotoImage(Image.open(stream))
-
-        except:
-            pass
+        except Exception as e:
+            logger.exception("Badge loading")
 
     def open_gui(self):
         root = tkinter.Tk()
@@ -248,21 +250,19 @@ class IRCPlugin(master.GenericPlugin):
                 emote_id = part.replace("{emote}", "")
                 try:
                     self.text_field.image_create(tkinter.END, image=self.loaded_emotes[emote_id])
-                except:
-                    # emote not there
-                    pass
+                except Exception as e:
+                    logger.exception("Emote not loaded")
             elif part.startswith("{badge}"):
                 badge_id = part.replace("{badge}", "")
                 try:
                     self.text_field.image_create(tkinter.END, image=self.loaded_badges[badge_id])
-                except:
-                    # badge not there
-                    pass
+                except Exception as e:
+                    logger.exception("Badge not loaded")
             else:
                 try:
                     self.text_field.insert(tkinter.END, part)
                 except:
-                    print("DEBUG: GUI UNEXPECTED CHAR: %s" % part)
+                    logger.log(logging.DEBUG, "GUI UNEXPECTED CHAR: %s" % part)
         self.text_field.insert(tkinter.END, "\n")
         if self.auto_scroll.get() == 1:
             self.text_field.see(tkinter.END)

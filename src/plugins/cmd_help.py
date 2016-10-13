@@ -1,4 +1,8 @@
+import logging
+
 import master
+
+logger = logging.getLogger(__name__)
 
 
 class IRCPlugin(master.CommandPlugin):
@@ -34,6 +38,7 @@ class IRCPlugin(master.CommandPlugin):
             self.__plugins = self.plugin_manager.get_registered_commands()
         if self.is_valid_request(message.user):
             plugin = message.msg[6:].lower().strip()
+            logger.log(logging.DEBUG, "@%s -> help %s" % (message.user[0], plugin))
             filer_str = plugin
             out = []
             filtered = filter(lambda module: filer_str in module.cmd and module.add_to_help
@@ -54,8 +59,5 @@ class IRCPlugin(master.CommandPlugin):
             else:
                 self.connection.add_chat_msg(using["none_found"] % plugin)
 
-    def on_load(self, bot):
-        super().on_load(bot)
-
     def on_refresh(self):
-        self.__plugins = self.plugin_manager.get_loaded_plugins()
+        self.__plugins = None

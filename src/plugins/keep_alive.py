@@ -1,4 +1,8 @@
+import logging
+
 import master
+
+logger = logging.getLogger(__name__)
 
 
 class IRCPlugin(master.GenericPlugin):
@@ -9,4 +13,4 @@ class IRCPlugin(master.GenericPlugin):
     def cmd(self, message):
         pong_msg = message.raw_line.replace("PING", "PONG")
         self.connection.add_raw_msg(pong_msg, important=True)
-        print("PING > %s" % pong_msg)
+        logger.log(logging.INFO, "PING > %s" % pong_msg)

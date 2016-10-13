@@ -2,8 +2,8 @@ import cfg_c
 
 config = {
     "paths": {
-        "database_dir": "database",
-        "plugin_dir": "plugins"
+        "plugin_dir": "plugins",
+        "logs_dir": "logs",
     },
     "connection": {
         "server": "irc.chat.twitch.tv",
@@ -12,7 +12,7 @@ config = {
         "nick_name": cfg_c.USER,
         "oauth_token": cfg_c.OAUTH,
         "client_id": cfg_c.CLIENT,
-        "channel": "lirik",
+        "channel": "dansgaming",
         "msg_decoding": "utf-8",
         "msg_encoding": "utf-8",
         "timeout_between_msg": (20 / 30),

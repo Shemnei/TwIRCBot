@@ -1,4 +1,7 @@
 import master
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class IRCPlugin(master.CommandPlugin):
@@ -16,7 +19,5 @@ class IRCPlugin(master.CommandPlugin):
 
     def cmd(self, message):
         if self.is_valid_request(message.user):
+            logger.log(logging.DEBUG, "@%s -> status [perm_lvl:%i / coins: %i]" % message.user)
             self.connection.add_chat_msg(".w %s Yours stats: [perm_lvl:%i / coins: %i]!" % message.user)
-
-    def get_description(self):
-        return "!status - Gives info about user"

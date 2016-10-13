@@ -1,8 +1,11 @@
+import logging
 import queue
 import socket
 import ssl
 import threading
 import time
+
+logger = logging.getLogger(__name__)
 
 
 class IRCConnection:
@@ -35,14 +38,14 @@ class IRCConnection:
             self.__irc_socket = tmp
 
         self.__irc_socket.connect((self.__config["connection"]["server"], self.__config["connection"]["port"]))
-        print("DEBUG: Connected to %s on %i" % (self.__config["connection"]["server"],
-                                                self.__config["connection"]["port"]))
+        logger.log(logging.INFO, "Connected to %s on %i" % (self.__config["connection"]["server"],
+                                                             self.__config["connection"]["port"]))
         if not self.__send_thread.is_alive():
             self.__send_thread.start()
-            print("DEBUG: Send Thread started")
+            logger.log(logging.DEBUG, "Send Thread started")
         if not self.__receive_thread.is_alive():
             self.__receive_thread.start()
-            print("DEBUG: Receive Thread started")
+            logger.log(logging.DEBUG, "Receive Thread started")
 
         req_str = ""
         if self.__config["connection"]["membership_messages"]:
@@ -52,13 +55,17 @@ class IRCConnection:
         if self.__config["connection"]["commands"]:
             req_str += "twitch.tv/commands"
 
+        oauth = self.__config["connection"]["oauth_token"]
+        if not oauth.startswith("oauth:"):
+            oauth = "oauth:" + oauth
+
         self.__send_queue.put("CAP REQ : %s" % req_str.rstrip())
-        self.__send_queue.put('PASS %s' % self.__config["connection"]["oauth_token"])
-        self.__send_queue.put('NICK %s' % self.__config["connection"]["nick_name"])
+        self.__send_queue.put('PASS %s' % oauth)
+        self.__send_queue.put('NICK %s' % self.__config["connection"]["nick_name"].lower())
 
         self.join_channel(self.__config["connection"]["channel"], reconnect=reconnect)
 
-        print("DEBUG: Connection established in %fms" % ((time.time() - start_connect)*1000))
+        logger.log(logging.DEBUG, "Connection established in %fms" % ((time.time() - start_connect)*1000))
 
     def __send_routine(self):
         while self.__running:
@@ -94,11 +101,11 @@ class IRCConnection:
                 self.reconnect()
 
             if len(buffer) == 0:
-                print("DEBUG: CONNECTION LOST")
+                logger.log(logging.WARNING, "CONNECTION LOST")
                 if self.__config["connection"]["auto_reconnect"]:
                     self.reconnect()
                 else:
-                    print("DEBUG: AUTO RECONNECT OFF - SHUTTING DOWN")
+                    logger.log(logging.INFO, "AUTO RECONNECT OFF - SHUTTING DOWN")
                     self.__running = False
                     self.__bot.stop()
 
@@ -122,15 +129,15 @@ class IRCConnection:
         channel = channel.lower()
         if self.__active_channel:
             self.add_raw_msg("PART #%s" % self.__active_channel, important=True)
-            print("DEBUG: Left %s" % self.__active_channel)
+            logger.log(logging.INFO, "Left %s" % self.__active_channel)
             self.__active_channel = None
             with self.__receive_queue.mutex:
                 self.__receive_queue.queue.clear()
-            print("DEBUG: Cleared receive queue")
+            logger.log(logging.DEBUG, "Cleared receive queue")
 
         self.add_raw_msg('JOIN #%s' % channel,  important=True)
         self.__active_channel = channel
-        print("DEBUG: Joined %s" % channel)
+        logger.log(logging.INFO, "Joined %s" % channel)
 
         # FIXME maybe move to plugin manager
         for p in self.__plugin_manager.get_loaded_plugins():
@@ -140,7 +147,7 @@ class IRCConnection:
             self.add_chat_msg(self.__config["general"]["join_msg"])
 
     def reconnect(self):
-        print("RECONNECTING")
+        logger.log(logging.INFO, "Attempting to reconnect")
         self.add_raw_msg("PART #%s" % self.__active_channel)
         self.connect(reconnect=True)
 
@@ -148,7 +155,7 @@ class IRCConnection:
         self.__running = False
 
     def close(self):
-        print("DEBUG: Connection closing")
+        logger.log(logging.INFO, "Connection closing")
         if self.__config["general"]["depart_msg"]:
             self.add_chat_msg(self.__config["general"]["depart_msg"])
         self.add_raw_msg("PART #%s" % self.__active_channel)
@@ -156,9 +163,9 @@ class IRCConnection:
         self.__running = False
 
         self.__receive_thread.join()
-        print("DEBUG: Receive Thread stopped")
+        logger.log(logging.DEBUG, "Receive Thread stopped")
         self.__send_thread.join()
-        print("DEBUG: Send Thread stopped")
+        logger.log(logging.DEBUG, "Send Thread stopped")
 
         self.__irc_socket.close()
 

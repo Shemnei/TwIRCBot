@@ -1,6 +1,9 @@
+import logging
 import random
 
 import master
+
+logger = logging.getLogger(__name__)
 
 
 class IRCPlugin(master.CommandPlugin):
@@ -35,4 +38,6 @@ class IRCPlugin(master.CommandPlugin):
 
     def cmd(self, message):
         if self.is_valid_request(message.user):
-            self.connection.add_chat_msg(random.choice(IRCPlugin.JOKES))
+            choice = random.choice(self.JOKES)
+            logger.log(logging.DEBUG, "@%s -> joke id:%i" % (message.user[0], self.JOKES.index(choice)))
+            self.connection.add_chat_msg(choice)

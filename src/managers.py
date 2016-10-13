@@ -2,6 +2,7 @@ import collections
 import datetime
 import enum
 import json
+import logging
 import math
 import os
 import queue
@@ -13,6 +14,8 @@ import urllib.request
 from importlib import util
 
 import master
+
+logger = logging.getLogger(__name__)
 
 
 class PluginManager:
@@ -31,7 +34,7 @@ class PluginManager:
 
     def load_plugins(self):
         if not self.__config["plugins"]["load_plugins"]:
-            print("DEBUG: Plugins not loaded (settings:load_plugins)")
+            logger.log(logging.INFO, "Plugins not loaded (settings:load_plugins)")
             return
 
         start_load_plugins = time.time()
@@ -72,7 +75,7 @@ class PluginManager:
             for x in disabled_plugins:
                 if x in tmp:
                     index = tmp.index(x)
-                    print("-Plugin %s disabled !" % self.__loaded_plugins[index].__module__)
+                    logger.log(logging.INFO, "-Plugin %s disabled !" % self.__loaded_plugins[index].__module__)
                     self.__loaded_plugins.pop(tmp.index(x))
                     tmp.pop(tmp.index(x))
 
@@ -81,9 +84,9 @@ class PluginManager:
 
         not_loaded = filter(lambda plugin: not isinstance(plugin, master.Plugin), plugins)
         for p in not_loaded:
-            print("-Plugin %s not loaded -> needs to be derived from master.Plugin" % p.__module__)
+            logger.log(logging.WARNING, "-Plugin %s not loaded -> needs to be derived from master.Plugin" % p.__module__)
 
-        print("DEBUG: Plugins Loaded in %fms" % ((time.time() - start_load_plugins) * 1000))
+        logger.log(logging.DEBUG, "Plugins Loaded in %fms" % ((time.time() - start_load_plugins) * 1000))
 
     def register_command(self, cmd, args, description, perm_lvl=0, add_to_help=True):
         cmds = [x.cmd for x in self.__registered_commands]
@@ -105,7 +108,7 @@ class PluginManager:
         return self.__loaded_plugins[:]
 
     def close(self):
-        print("DEBUG: Plugin Manager closing")
+        logger.log(logging.INFO, "Plugin Manager closing")
 
         for p in self.__loaded_plugins:
             p.on_close()
@@ -167,7 +170,7 @@ class MessageDistributor:
         if user_name.startswith(':'):
             user = [user_name, 0, 0]
         else:
-            user = list(self.__data_manager.get_user(user_name))
+            user = self.__data_manager.get_user(user_name)
 
         cmd = parts[1 + offset]
 
@@ -194,14 +197,14 @@ class MessageDistributor:
                 raise
 
     def start(self):
-        print("DEBUG: Distributor starting")
+        logger.log(logging.INFO, "Distributor starting")
 
         self.__running = True
         self.__loaded_plugins = self.__bot.get_plugin_manager().get_loaded_plugins()
         self.__distribution_thread.start()
 
     def close(self):
-        print("DEBUG: Distributor closing")
+        logger.log(logging.INFO, "Distributor closing")
         self.__running = False
         self.__distribution_thread.join()
 
@@ -235,7 +238,7 @@ class HeartbeatManager(master.Observable):
             self.__interval = 300
 
     def reload_settings(self):
-        print("DEBUG: Heartbeat System reloading")
+        logger.log(logging.INFO, "Heartbeat System reloading")
         self.load_settings()
 
         if self.__heartbeat_thread and self.__heartbeat_thread.is_alive():
@@ -250,7 +253,7 @@ class HeartbeatManager(master.Observable):
 
     def __heartbeat_routine(self):
         try:
-            print("DEBUG: Heartbeat System starting")
+            logger.log(logging.INFO, "Heartbeat System starting")
             self.__running = True
             while not self.__stop.wait(1):
                 data = urllib.request.urlopen(self.CHATTERS_URL % self.__channel).read()
@@ -259,8 +262,6 @@ class HeartbeatManager(master.Observable):
                 self.__last_updated = time.time()
                 self.__chatter_count = json_obj["chatter_count"]
                 self.__stored_chatters = json_obj["chatters"]
-
-                print("-- FETCHED CHATTERS WITH %s ENTRIES ---" % self.__chatter_count)
 
                 self.notify_observers("chatters")
 
@@ -276,7 +277,7 @@ class HeartbeatManager(master.Observable):
         return self.__chatter_count
 
     def close(self):
-        print("DEBUG: Heartbeat System closing")
+        logger.log(logging.INFO, "Heartbeat System closing")
         self.__stop.set()
         self.__heartbeat_thread.join()
 
@@ -302,7 +303,7 @@ class CurrencyManager(master.Observer):
         self.__message = self.__config["currency"]["message"]
 
     def reload_settings(self):
-        print("DEBUG: Currency System reloading")
+        logger.log(logging.INFO, "Currency System reloading")
         self.load_settings()
 
     def update(self, observable, args):
@@ -313,7 +314,6 @@ class CurrencyManager(master.Observer):
                                  name="currency_thread").start()
 
     def add_currency(self, currency_amount, msg):
-        # process viewer lists
         start = time.clock()
 
         chatters = []
@@ -321,15 +321,15 @@ class CurrencyManager(master.Observer):
 
         self.__data_manager.process_chatters_list(chatters, currency_amount)
 
-        print("Debug: Currency add time: %fms" % ((time.clock() - start) * 1000))
+        logger.log(logging.DEBUG, "Currency add time: %fms" % ((time.clock() - start) * 1000))
+        logger.log(logging.INFO, "Currency added to %s chatters" % len(chatters))
 
-        # end
         print("\033[34;1m{" + datetime.datetime.now().strftime("%H:%M:%S") +
               "} Currency given to %s viewers\033[0m" % len(chatters))
         self.__connection.add_chat_msg(msg)
 
     def close(self):
-        print("DEBUG: Currency System closing")
+        logger.log(logging.INFO, "Currency System closing")
         self.__bot.get_heartbeat_manager().remove_observer(self)
 
 
@@ -373,22 +373,22 @@ class CronManager:
                 smallest_interval = math.gcd(smallest_interval, i)
 
         self.__max_sleep_time = smallest_interval
-        print("DEBUG: Cron sleep time set to %is" % self.__max_sleep_time)
+        logger.log(logging.DEBUG, "Cron sleep time set to %is" % self.__max_sleep_time)
 
     def reload_jobs(self):
-        print("DEBUG: Cron jobs reloading")
+        logger.log(logging.INFO, "Cron jobs reloading")
         self.load_cron_jobs()
         if self.__cron_thread and not self.__cron_thread.is_alive():
             self.start()
 
     def start(self):
-        print("DEBUG: Cron starting")
+        logger.log(logging.INFO, "Cron starting")
         self.__cron_thread = threading.Thread(target=self.__cron_routine, name="cron_thread")
         self.__cron_thread.start()
 
     def __cron_routine(self):
         if not self.__cron_jobs or len(self.__cron_jobs) == 0:
-            print("DEBUG: Cron stopped [no jobs]")
+            logger.log(logging.INFO, "Cron stopped [no jobs]")
             return
         time_slept = 0
         try:
@@ -403,13 +403,15 @@ class CronManager:
 
                         print("\033[34;1m{" + datetime.datetime.now().strftime("%H:%M:%S")
                               + "} Cron job executed [%s/%i]\033[0m" % (cj.channel, cj.interval))
+                        logging.log(logging.DEBUG, "Cron job executed [%s/%i]" % (cj.channel, cj.interval))
+
                 if self.__cron_jobs[-1].interval <= time_slept:
                     time_slept = 0
         finally:
                 self.__running = False
 
     def close(self):
-        print("DEBUG: Cron closing")
+        logging.log(logging.INFO, "Cron closing")
         self.stop.set()
         self.__cron_thread.join()
 
@@ -441,7 +443,7 @@ class DataManager:
         con.commit()
 
         con.close()
-        print("Debug: Database setup time: %fms" % ((time.clock() - start) * 1000))
+        logging.log(logging.DEBUG, "Database setup time: %fms" % ((time.clock() - start) * 1000))
 
     def process_chatters_list(self, chatters, currency_amount):
         con = sqlite3.connect(DataManager.DATABASE_NAME, timeout=10)
@@ -535,7 +537,7 @@ class DataManager:
         return user
 
     def close(self):
-        print("DEBUG: Data System closing")
+        logging.log(logging.INFO, "DEBUG: Data System closing")
 
 
 class ConfigManager:
