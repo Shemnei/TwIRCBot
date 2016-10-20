@@ -18,9 +18,9 @@ class IRCPlugin(master.CommandPlugin):
         return r"PRIVMSG #\w+ :!add_cur \w+ \d+"
 
     def cmd(self, message):
-        if message.user[1] >= self.data_manager.PermissionLevel.moderator \
-                or message.user[0] == self.config["connection"]["nick_name"].lower()\
-                or message.user[0] == self.config["connection"]["channel"]:
+        if message.user.perm_lvl >= self.data_manager.PermissionLevel.moderator \
+                or message.user.name == self.config["connection"]["nick_name"].lower()\
+                or message.user.name == self.config["connection"]["channel"]:
 
             args = message.msg[9:].split()
 

@@ -96,18 +96,13 @@ class IRCConnection:
 
             try:
                 buffer = "".join((buffer, self.__irc_socket.recv(self.__config["connection"]["receive_size_bytes"])
-                              .decode(self.__config["connection"]["msg_decoding"])))
+                                  .decode(self.__config["connection"]["msg_decoding"])))
             except ConnectionAbortedError:
-                self.reconnect()
+                self.__handel_reconnect()
 
             if len(buffer) == 0:
                 logger.log(logging.WARNING, "CONNECTION LOST")
-                if self.__config["connection"]["auto_reconnect"]:
-                    self.reconnect()
-                else:
-                    logger.log(logging.INFO, "AUTO RECONNECT OFF - SHUTTING DOWN")
-                    self.__running = False
-                    self.__bot.stop()
+                self.__handel_reconnect()
 
             lines = buffer.splitlines(keepends=True)
 
@@ -119,6 +114,14 @@ class IRCConnection:
 
             for line in lines:
                 self.__distribution_manager.add_line(line.rstrip())
+
+    def __handel_reconnect(self):
+        if self.__config["connection"]["auto_reconnect"]:
+            self.reconnect()
+        else:
+            logger.log(logging.INFO, "AUTO RECONNECT OFF - SHUTTING DOWN")
+            self.__running = False
+            self.__bot.stop()
 
     def add_received_msg(self, msg):
         full_msg = (":{0}!{0}@{0}.tmi.twitch.tv PRIVMSG #{1} :{2}"
@@ -139,15 +142,13 @@ class IRCConnection:
         self.__active_channel = channel
         logger.log(logging.INFO, "Joined %s" % channel)
 
-        # FIXME maybe move to plugin manager
-        for p in self.__plugin_manager.get_loaded_plugins():
-            p.on_channel_change(self.__active_channel)
+        self.__plugin_manager.handle_channel_change(channel)
 
         if self.__config["general"]["join_msg"] and not reconnect:
             self.add_chat_msg(self.__config["general"]["join_msg"])
 
     def reconnect(self):
-        logger.log(logging.INFO, "Attempting to reconnect")
+        logger.log(logging.INFO, "Disconnected -> Attempting to reconnect")
         self.add_raw_msg("PART #%s" % self.__active_channel)
         self.connect(reconnect=True)
 
@@ -161,7 +162,6 @@ class IRCConnection:
         self.add_raw_msg("PART #%s" % self.__active_channel)
 
         self.__running = False
-
         self.__receive_thread.join()
         logger.log(logging.DEBUG, "Receive Thread stopped")
         self.__send_thread.join()

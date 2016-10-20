@@ -26,6 +26,6 @@ class IRCPlugin(master.FilterPlugin):
             match = re.search(regex, message.msg)
             if match is not None:
                 logger.log(logging.DEBUG, "%s - %s" % (match, message.user))
-                self.connection.add_chat_msg(IRCPlugin.message % message.user[0])
-                self.connection.add_chat_msg(IRCPlugin.command % message.user[0])
+                self.connection.add_chat_msg(IRCPlugin.message % message.user.name)
+                self.connection.add_chat_msg(IRCPlugin.command % message.user.name)
                 return

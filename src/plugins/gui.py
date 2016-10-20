@@ -51,7 +51,7 @@ class IRCPlugin(master.GenericPlugin):
             return r"$ä"
 
     def cmd(self, message):
-        user = message.user[0]
+        user = message.user.name
         if message.tags:
 
             message_parts = ["[" + datetime.datetime.now().strftime("%H:%M:%S") + "] "]
@@ -251,18 +251,18 @@ class IRCPlugin(master.GenericPlugin):
                 try:
                     self.text_field.image_create(tkinter.END, image=self.loaded_emotes[emote_id])
                 except Exception as e:
-                    logger.exception("Emote not loaded")
+                    logger.debug("Emote not loaded", exc_info=True)
             elif part.startswith("{badge}"):
                 badge_id = part.replace("{badge}", "")
                 try:
                     self.text_field.image_create(tkinter.END, image=self.loaded_badges[badge_id])
                 except Exception as e:
-                    logger.exception("Badge not loaded")
+                    logger.debug("Badge not loaded", exc_info=True)
             else:
                 try:
                     self.text_field.insert(tkinter.END, part)
                 except:
-                    logger.log(logging.DEBUG, "GUI UNEXPECTED CHAR: %s" % part)
+                    pass
         self.text_field.insert(tkinter.END, "\n")
         if self.auto_scroll.get() == 1:
             self.text_field.see(tkinter.END)

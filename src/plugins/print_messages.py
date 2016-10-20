@@ -9,7 +9,7 @@ class IRCPlugin(master.GenericPlugin):
         return r"(PRIVMSG|WHISPER) #?\w+ :"
 
     def cmd(self, message):
-        user = message.user[0]
+        user = message.user.name
         title = ""
         color = None
         if message.tags:

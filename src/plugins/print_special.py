@@ -79,14 +79,14 @@ class IRCPlugin(master.GenericPlugin):
         elif command == "CLEARCHAT":
             if parts[-1].startswith(':'):
                 if tag_cmp:
-                    if tag_cmp.get("banduration", None):
+                    if tag_cmp.get("ban-duration", None):
                         self.print_tm("SERVER: %s timed out [%ss/%s]" % (display_name or parts[3 + offset].lstrip(":"),
-                                                                    tag_cmp["banduration"],
-                                                                    tag_cmp.get("banreason", "").replace("\s", " ")))
+                                                                    tag_cmp["ban-duration"],
+                                                                    tag_cmp.get("ban-reason", "").replace("\s", " ")))
                         return
                     else:
                         self.print_tm("SERVER: %s banned [%s]" % (display_name or parts[3 + offset].lstrip(":"),
-                                                             tag_cmp.get("banreason", "").replace("\s", " ")))
+                                                             tag_cmp.get("ban-reason", "").replace("\s", " ")))
                         return
                 else:
                     self.print_tm("SERVER: %s timeout or banned" % (display_name or parts[3 + offset].lstrip(":")))

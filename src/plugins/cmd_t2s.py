@@ -31,8 +31,8 @@ class IRCPlugin(master.CommandPlugin):
         if self.is_valid_request(message.user):
             text = message.msg[5:]
             if len(text) > 0:
-                logger.log(logging.DEBUG, "@%s -> t2s %s" % (str(message.user), message))
-                threading.Thread(target=self.text_2_speech, args=(message,), name="text_to_speech_thread").start()
+                logger.log(logging.DEBUG, "@%s -> t2s %s" % (str(message.user), message.msg[5:]))
+                threading.Thread(target=self.text_2_speech, args=(message.msg[5:],), name="text_to_speech_thread").start()
 
     def text_2_speech(self, text):
         tts = gtts.gTTS(text=text, lang=self.__lang)
@@ -46,6 +46,6 @@ class IRCPlugin(master.CommandPlugin):
     def on_close(self):
         super().on_close()
         if os.path.isfile(self.mp3_path):
-            print("T2S: Cleaning up")
+            logger.log(logging.DEBUG, "T2S Cleaned File")
             os.remove(self.mp3_path)
 

@@ -3,7 +3,7 @@ import cfg_c
 config = {
     "paths": {
         "plugin_dir": "plugins",
-        "log_dir": "logs",
+        "log_dir": "logs"
     },
     "connection": {
         "server": "irc.chat.twitch.tv",
@@ -23,9 +23,10 @@ config = {
         "commands": True
     },
     "logging": {
+        "max_log_files": 5,
         "enable_console_logging": True,
-        "console_log_level": 20,
-        "enable_file_logging": False,
+        "console_log_level": 10,
+        "enable_file_logging": True,
         "file_log_level": 10,
         "log_format": "[%(asctime)s / %(name)s / %(levelname)s] %(message)s"
     },
@@ -33,15 +34,15 @@ config = {
         "join_msg": ".me up and running!",
         "depart_msg": ".me battery empty, leaving!",
         "silent_mode": True,
-        "only_silent_in_other_channels": False,
+        "only_silent_in_other_channels": False
     },
     "plugins": {
         "load_plugins": True,
-        "custom_load_order": ["gui_user_input"],    # <- loads those plugins in order first then the others found
-        "disabled_plugins": ["print_raw", "print_messages"],
+        "custom_load_order": ["gui"],    # <- loads those plugins in order first then the others found
+        "disabled_plugins": ["print_raw", "print_messages"]
     },
     "plugin_settings": {
-        "lang_t2s": 'en',
+        "lang_t2s": "en",
         "enable_gui_messages": True,
         "enable_gui_emotes": True,
         "enable_gui_badges": True,
@@ -65,6 +66,6 @@ config = {
             "channel": "own_channel",
             "interval": 30,                     # <- in sec
             "message": "Hello i am cron job two"
-        },
+        }
     }
 }

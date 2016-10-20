@@ -29,9 +29,9 @@ class IRCPlugin(master.CommandPlugin):
     def cmd(self, message):
         args = message.msg[8:].split()
 
-        if message.user[1] >= self.data_manager.PermissionLevel.moderator \
-                or message.user[0] == self.config["connection"]["nick_name"].lower() \
-                or message.user[0] == self.config["connection"]["channel"]:
+        if message.user.perm_lvl >= self.data_manager.PermissionLevel.moderator \
+                or message.user.name == self.config["connection"]["nick_name"].lower() \
+                or message.user.name == self.config["connection"]["channel"]:
 
             if args[0] == "start":
 
@@ -82,8 +82,8 @@ class IRCPlugin(master.CommandPlugin):
 
             if self.__running:
                 logger.log(logging.DEBUG, "@%s -> raffle join" % str(message.user))
-                self.connection.add_chat_msg(".w %s You entered the raffle!" % message.user[0])
-                self.__entries.append(message.user[0])
+                self.connection.add_chat_msg(".w %s You entered the raffle!" % message.user.name)
+                self.__entries.append(message.user.name)
             else:
                 logger.log(logging.DEBUG, "@%s -> raffle join - no raffle running" % str(message.user))
                 self.connection.add_chat_msg("There is currently no raffle running!")

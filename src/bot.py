@@ -27,6 +27,15 @@ class Bot:
         log_dir = self.__cfg["paths"]["log_dir"]
         if not os.path.isdir(log_dir):
             os.makedirs(log_dir)
+        else:
+            old_log_files = os.listdir(log_dir)
+            difference = len(old_log_files) - int(self.__cfg["logging"]["max_log_files"])
+            for i in range(difference):
+                try:
+                    os.remove(os.path.join(log_dir, old_log_files[i]))
+                    print("Removed old log file: %s" % old_log_files[i])
+                except:
+                    print("Could not remove old log file: %s" % old_log_files[i])
 
         active_handlers = []
 
@@ -47,6 +56,7 @@ class Bot:
         logging.basicConfig(format=self.__cfg["logging"]["log_format"], level=logging.DEBUG, handlers=active_handlers)
 
         logging.getLogger("PIL").setLevel(logging.WARNING)
+        logging.getLogger("urllib").setLevel(logging.WARNING)
         self.__logger = logging.getLogger(__name__)
 
     def __init__(self, config):
@@ -91,10 +101,21 @@ class Bot:
 
         while self.__running:
             try:
-                time.sleep(5)
+                time.sleep(1)
             except KeyboardInterrupt:
                 self.__close()
         self.__close()
+
+    # def refresh(self):
+    #     #self.__cfg
+    #
+    #     self.__connection.refresh()
+    #     self.__data_manager.refresh()
+    #     self.__cron_manager.refresh()
+    #     self.__heartbeat_manager.refresh()
+    #     self.__currency_manager.refresh()
+    #     self.__plugin_manager.refresh()
+    #     self.__distribution_manager.refresh()
 
     def stop(self):
         self.__running = False

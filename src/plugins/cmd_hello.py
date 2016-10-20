@@ -21,7 +21,7 @@ class IRCPlugin(master.CommandPlugin):
 
     def cmd(self, message):
         if self.is_valid_request(message.user):
-            user = message.user[0]
+            user = message.user.name
             if message.tags and message.tags.get("display-name", None):
                 user = message.tags["display-name"]
 

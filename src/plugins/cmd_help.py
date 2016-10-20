@@ -42,7 +42,7 @@ class IRCPlugin(master.CommandPlugin):
             filer_str = plugin
             out = []
             filtered = filter(lambda module: filer_str in module.cmd and module.add_to_help
-                                             and message.user[1] >= module.perm_lvl, self.__plugins)
+                                             and message.user.perm_lvl >= module.perm_lvl, self.__plugins)
             if plugin:
                 using = IRCPlugin.specific
             else:

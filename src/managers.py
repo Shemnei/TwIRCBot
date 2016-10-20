@@ -1,4 +1,5 @@
 import collections
+import configparser
 import datetime
 import enum
 import json
@@ -98,6 +99,10 @@ class PluginManager:
         if filter not in filters:
             self.__registered_filters.append(self.Filter(filter, description, perm_lvl))
 
+    def handle_channel_change(self, channel):
+        for p in self.__loaded_plugins:
+            p.on_channel_change(channel)
+
     def get_registered_commands(self):
         return self.__registered_commands[:]
 
@@ -168,7 +173,7 @@ class MessageDistributor:
         else:
             user_name = parts[0 + offset][1:index]
         if user_name.startswith(':'):
-            user = [user_name, 0, 0]
+            user = DataManager.User(user_name, 0, 0)
         else:
             user = self.__data_manager.get_user(user_name)
 
@@ -419,6 +424,8 @@ class CronManager:
 class DataManager:
     DATABASE_NAME = "users.db"
 
+    User = collections.namedtuple("User", ["name", "perm_lvl", "currency"])
+
     @enum.unique
     class PermissionLevel(enum.IntEnum):
         basic = 0
@@ -473,7 +480,7 @@ class DataManager:
             con.close()
 
     def get_user_currency(self, user):
-        return self.get_user(user)[2]
+        return self.get_user(user).currency
 
     def set_user_currency(self, user, new_currency):
         con = sqlite3.connect(DataManager.DATABASE_NAME, timeout=10)
@@ -504,7 +511,7 @@ class DataManager:
         con.close()
 
     def get_user_permlvl(self, user):
-        return self.get_user(user)[1]
+        return self.get_user(user).perm_lvl
 
     def set_user_permlvl(self, user, new_permlvl):
         con = sqlite3.connect(DataManager.DATABASE_NAME, timeout=10)
@@ -533,6 +540,7 @@ class DataManager:
         con.commit()
         con.close()
 
+        user = self.User(*user)
         self.__loaded_user = user
         return user
 
@@ -541,4 +549,14 @@ class DataManager:
 
 
 class ConfigManager:
-    pass
+
+    def __init__(self, path, encoding="utf-8"):
+        self.__path = path
+        self.__encoding = encoding
+
+    def load_cfg(self):
+        cfg = configparser.ConfigParser()
+        cfg.read(self.__path, self.__encoding)
+
+
+

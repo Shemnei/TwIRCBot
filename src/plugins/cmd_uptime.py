@@ -34,16 +34,15 @@ class IRCPlugin(master.CommandPlugin):
         if self.is_valid_request(message.user):
 
             if not self.__current_stream_start:
-                print("Uptime: Offline")
                 logger.log(logging.DEBUG, "@%s -> uptime [%s/offline]" % (str(message.user), self.__current_channel))
                 self.connection.add_chat_msg("Stream is offline")
             else:
                 current = datetime.datetime.fromtimestamp(time.mktime(time.gmtime())) - datetime.timedelta(hours=1)
                 diff = current - self.__current_stream_start
                 logger.log(logging.DEBUG, "@%s -> uptime [%s/%s]" % (str(message.user), self.__current_channel, diff))
-                print("Uptime: %s" % diff)
                 self.connection.add_chat_msg("Stream online for: %s" % (current - self.__current_stream_start))
 
+            # TODO make it message independent
             if time.time() - self.__last_fetched > 300:
                 threading.Thread(name="uptime_request_thread", target=self.__get_stream_uptime).start()
 

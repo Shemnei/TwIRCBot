@@ -86,16 +86,21 @@ class CommandPlugin(Plugin):
         if self.IS_COOL_DOWN_GLOBAL:
 
             valid = False
-            if not self.__last_global_call or (time.time() - self.__last_global_call >= self.COOL_DOWN
-                                               and user[1] >= self.PERMISSION_LEVEL):
+            if user.name == self.config["connection"]["nick_name"].lower() \
+                    or user.name == self.config["connection"]["channel"].lower() \
+                    or not self.__last_global_call \
+                    or ((time.time() - self.__last_global_call >= self.COOL_DOWN
+                         and user.perm_lvl >= self.PERMISSION_LEVEL)):
                 valid = True
                 self.__last_global_call = time.time()
             return valid
 
         else:
-            user_last_call = self.__user_calls.get(user[0], 0)
-            if time.time() - user_last_call >= self.COOL_DOWN and user[1] >= self.PERMISSION_LEVEL:
-                self.__user_calls[user[0]] = time.time()
+            user_last_call = self.__user_calls.get(user.name, 0)
+            if user.name == self.config["connection"]["nick_name"].lower() \
+                    or user.name == self.config["connection"]["channel"].lower() \
+                    or (time.time() - user_last_call >= self.COOL_DOWN and user.perm_lvl >= self.PERMISSION_LEVEL):
+                self.__user_calls[user.name] = time.time()
                 return True
             return False
 
@@ -132,7 +137,8 @@ class Observable:
             self.__registered_observers.append(observer)
 
     def remove_observer(self, observer):
-        self.__registered_observers.remove(observer)
+        if observer in self.__registered_observers:
+            self.__registered_observers.remove(observer)
 
     def notify_observers(self, arg=None):
         local_list = self.__registered_observers[:]
