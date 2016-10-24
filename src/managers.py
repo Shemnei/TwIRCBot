@@ -1,5 +1,4 @@
 import collections
-import configparser
 import datetime
 import enum
 import json
@@ -9,6 +8,7 @@ import os
 import queue
 import re
 import sqlite3
+import sys
 import threading
 import time
 import urllib.request
@@ -34,20 +34,20 @@ class PluginManager:
         self.__bot = bot
 
     def load_plugins(self):
-        if not self.__config["plugins"]["load_plugins"]:
+        if not self.__config.config["plugins"]["load_plugins"]:
             logger.log(logging.INFO, "Plugins not loaded (settings:load_plugins)")
             return
 
         start_load_plugins = time.time()
 
-        path = self.__config["paths"]["plugin_dir"]
+        path = self.__config.config["paths"]["plugin_dir"]
         if not os.path.isdir(path):
             os.makedirs(path)
 
         files = filter(lambda f: f.endswith('.py'), os.listdir(path))
         modules = []
         for file in files:
-            spec = util.spec_from_file_location(file[:-3], os.path.join(self.__config["paths"]["plugin_dir"], file))
+            spec = util.spec_from_file_location(file[:-3], os.path.join(self.__config.config["paths"]["plugin_dir"], file))
             module = util.module_from_spec(spec)
             spec.loader.exec_module(module)
             modules.append(module)
@@ -56,7 +56,7 @@ class PluginManager:
         loaded = list(filter(lambda plugin: isinstance(plugin, master.Plugin), plugins))
 
         # custom load order
-        load_order = self.__config["plugins"]["custom_load_order"]
+        load_order = self.__config.config["plugins"]["custom_load_order"]
         if load_order:
             self.__loaded_plugins = []
             tmp = [x.__module__ for x in loaded]
@@ -70,7 +70,7 @@ class PluginManager:
             self.__loaded_plugins = list(loaded)
 
         # disabled plugins
-        disabled_plugins = self.__config["plugins"]["disabled_plugins"]
+        disabled_plugins = self.__config.config["plugins"]["disabled_plugins"]
         if disabled_plugins:
             tmp = [x.__module__ for x in self.__loaded_plugins]
             for x in disabled_plugins:
@@ -236,9 +236,9 @@ class HeartbeatManager(master.Observable):
         self.__stop = threading.Event()
 
     def load_settings(self):
-        self.__channel = self.__config["connection"]["channel"]
-        if self.__config["currency"]["enabled"]:
-            self.__interval = int(self.__config["currency"]["interval"]) or 300
+        self.__channel = self.__config.config["connection"]["channel"]
+        if self.__config.config["currency"]["enabled"]:
+            self.__interval = int(self.__config.config["currency"]["interval"]) or 300
         else:
             self.__interval = 300
 
@@ -302,10 +302,10 @@ class CurrencyManager(master.Observer):
         self.__chatters = {}
 
     def load_settings(self):
-        self.__enabled = self.__config["currency"]["enabled"]
-        self.__interval = int(self.__config["currency"]["interval"]) or 300
-        self.__amount = int(self.__config["currency"]["amount"]) or 1
-        self.__message = self.__config["currency"]["message"]
+        self.__enabled = self.__config.config["currency"]["enabled"]
+        self.__interval = int(self.__config.config["currency"]["interval"]) or 300
+        self.__amount = int(self.__config.config["currency"]["amount"]) or 1
+        self.__message = self.__config.config["currency"]["message"]
 
     def reload_settings(self):
         logger.log(logging.INFO, "Currency System reloading")
@@ -345,7 +345,7 @@ class CronManager:
     def __init__(self, bot):
         super().__init__()
 
-        self.__config_manager = bot.get_config_manager()
+        self.__config = bot.get_config_manager()
         self.__connection = bot.get_connection()
 
         self.__max_sleep_time = None
@@ -361,7 +361,7 @@ class CronManager:
         self.__max_sleep_time = None
 
         intervals = []
-        for job in self.__config_manager["cron"].values():
+        for job in self.__config.config["cron"].values():
             if job["enabled"]:
                 self.__cron_jobs.append(self.CronJob(job["interval"],
                                                      job["channel"],
@@ -437,7 +437,7 @@ class DataManager:
     def __init__(self, bot):
         self.__bot = bot
         self.__config = bot.get_config_manager()
-        self.__channel = self.__config["connection"]["channel"]
+        self.__channel = self.__config.config["connection"]["channel"]
         self.__loaded_user = None
 
     def setup_database(self):
@@ -549,14 +549,97 @@ class DataManager:
 
 
 class ConfigManager:
+    DEFAULT_VALUES = {
+        "paths": {
+            "plugin_dir": "plugins",
+            "log_dir": "logs"
+        },
+        "connection": {
+            "server": "irc.chat.twitch.tv",
+            "port": 443,
+            "ssl": True,
+            "nick_name": "user_name",
+            "oauth_token": "oauth_token",
+            "client_id": "client_id",
+            "channel": "your_channel",
+            "msg_decoding": "utf-8",
+            "msg_encoding": "utf-8",
+            "timeout_between_msg": 0.7,
+            "receive_size_bytes": 4096,
+            "auto_reconnect": True,
+            "membership_messages": True,
+            "tags": True,
+            "commands": True
+        },
+        "logging": {
+            "max_log_files": 5,
+            "enable_console_logging": True,
+            "console_log_level": 20,
+            "enable_file_logging": True,
+            "file_log_level": 10,
+            "log_format": "[%(asctime)s / %(name)s / %(levelname)s] %(message)s"
+        },
+        "general": {
+            "join_msg": ".me up and running!",
+            "depart_msg": ".me battery empty, leaving!",
+            "silent_mode": True,
+            "only_silent_in_other_channels": True
+        },
+        "plugins": {
+            "load_plugins": True,
+            "custom_load_order": ["gui"],
+            "disabled_plugins": ["print_raw", "print_messages"]
+        },
+        "plugin_settings": {
+            "lang_t2s": "en",
+            "enable_gui_messages": True,
+            "enable_gui_emotes": True,
+            "enable_gui_badges": True
+        },
+        "currency": {
+            "enabled": False,
+            "interval": 300,
+            "amount": 1,
+            "message": "I'm laughing straight to the bank with this (Ha, ha ha ha ha ha, ha, ha ha ha ha ha)"
+        },
+        "cron": {
+            "cron_job_one": {
+                "enabled": False,
+                "channel": "own_channel",
+                "interval": 10,
+                "message": "Hello i am cron job one"
+            },
+            "cron_job_two": {
+                "enabled": False,
+                "ignore_silent_mode": False,
+                "channel": "own_channel",
+                "interval": 30,
+                "message": "Hello i am cron job two"
+            }
+        }
+    }
 
-    def __init__(self, path, encoding="utf-8"):
-        self.__path = path
+    FILE_NAME = "config.json"
+
+    def __init__(self, bot, encoding="utf-8"):
+        self.bot = bot
         self.__encoding = encoding
+        self.config = None
 
     def load_cfg(self):
-        cfg = configparser.ConfigParser()
-        cfg.read(self.__path, self.__encoding)
+        if not os.path.isfile(self.FILE_NAME):
+            with open(self.FILE_NAME, "w") as file:
+                json.dump(self.DEFAULT_VALUES, file, indent=4)
+            print("No config found - created one")
+            print("Edit config - then start again")
+            sys.exit()
+
+        with open(self.FILE_NAME) as content:
+            try:
+                self.config = json.load(content, encoding=self.__encoding)
+            except Exception as e:
+                print("Invalid Json Format: %s" % e)
+                sys.exit()
 
 
 

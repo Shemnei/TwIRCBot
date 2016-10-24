@@ -74,6 +74,8 @@ class CommandPlugin(Plugin):
     PERMISSION_LEVEL = 0        # <- your level needs to same or higher to execute command
     ADD_TO_HELP = False
 
+    # TODO Implement
+    CURRENCY_COST = 0
     COOL_DOWN = 0
     IS_COOL_DOWN_GLOBAL = False
 
@@ -86,8 +88,8 @@ class CommandPlugin(Plugin):
         if self.IS_COOL_DOWN_GLOBAL:
 
             valid = False
-            if user.name == self.config["connection"]["nick_name"].lower() \
-                    or user.name == self.config["connection"]["channel"].lower() \
+            if user.name == self.config.config["connection"]["nick_name"].lower() \
+                    or user.name == self.config.config["connection"]["channel"].lower() \
                     or not self.__last_global_call \
                     or ((time.time() - self.__last_global_call >= self.COOL_DOWN
                          and user.perm_lvl >= self.PERMISSION_LEVEL)):
@@ -97,8 +99,8 @@ class CommandPlugin(Plugin):
 
         else:
             user_last_call = self.__user_calls.get(user.name, 0)
-            if user.name == self.config["connection"]["nick_name"].lower() \
-                    or user.name == self.config["connection"]["channel"].lower() \
+            if user.name == self.config.config["connection"]["nick_name"].lower() \
+                    or user.name == self.config.config["connection"]["channel"].lower() \
                     or (time.time() - user_last_call >= self.COOL_DOWN and user.perm_lvl >= self.PERMISSION_LEVEL):
                 self.__user_calls[user.name] = time.time()
                 return True

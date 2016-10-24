@@ -7,7 +7,6 @@ import sys
 import time
 from logging import handlers
 
-import cfg
 import connection
 import managers
 
@@ -24,12 +23,12 @@ class Bot:
             self.__logger.log(logging.DEBUG, "Ansi escape sequence enabled [%s]" % platform.platform())
 
     def __setup_logging(self):
-        log_dir = self.__cfg["paths"]["log_dir"]
+        log_dir = self.__config_manager.config["paths"]["log_dir"]
         if not os.path.isdir(log_dir):
             os.makedirs(log_dir)
         else:
             old_log_files = os.listdir(log_dir)
-            difference = len(old_log_files) - int(self.__cfg["logging"]["max_log_files"])
+            difference = len(old_log_files) - int(self.__config_manager.config["logging"]["max_log_files"])
             for i in range(difference):
                 try:
                     os.remove(os.path.join(log_dir, old_log_files[i]))
@@ -40,29 +39,32 @@ class Bot:
         active_handlers = []
 
         console_handler = logging.StreamHandler()
-        if self.__cfg["logging"]["enable_console_logging"]:
-            console_handler.setLevel(self.__cfg["logging"]["console_log_level"])
+        if self.__config_manager.config["logging"]["enable_console_logging"]:
+            console_handler.setLevel(self.__config_manager.config["logging"]["console_log_level"])
         else:
             console_handler.setLevel(sys.maxsize)
         active_handlers.append(console_handler)
 
-        if self.__cfg["logging"]["enable_file_logging"]:
+        if self.__config_manager.config["logging"]["enable_file_logging"]:
             file_handler = logging.handlers.RotatingFileHandler(
                 os.path.join("logs", datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_botlog.txt"),
                 encoding="utf-8")
-            file_handler.setLevel(self.__cfg["logging"]["file_log_level"])
+            file_handler.setLevel(self.__config_manager.config["logging"]["file_log_level"])
             active_handlers.append(file_handler)
 
-        logging.basicConfig(format=self.__cfg["logging"]["log_format"], level=logging.DEBUG, handlers=active_handlers)
+        logging.basicConfig(format=self.__config_manager.config["logging"]["log_format"], level=logging.DEBUG, handlers=active_handlers)
 
         logging.getLogger("PIL").setLevel(logging.WARNING)
         logging.getLogger("urllib").setLevel(logging.WARNING)
         self.__logger = logging.getLogger(__name__)
 
-    def __init__(self, config):
-        self.__cfg = config
+    def __init__(self):
         self.__running = False
         self.__logger = None
+
+        self.__config_manager = managers.ConfigManager(self)
+        self.__config_manager.load_cfg()
+
         self.__setup_logging()
 
         self.__logger.log(logging.INFO, "Bot init")
@@ -107,7 +109,7 @@ class Bot:
         self.__close()
 
     # def refresh(self):
-    #     #self.__cfg
+    #     #self.__config_manager
     #
     #     self.__connection.refresh()
     #     self.__data_manager.refresh()
@@ -145,7 +147,7 @@ class Bot:
         return self.__connection
 
     def get_config_manager(self):
-        return self.__cfg
+        return self.__config_manager
 
     def get_currency_manager(self):
         return self.__currency_manager
@@ -155,6 +157,6 @@ class Bot:
 
 
 if __name__ == '__main__':
-    bot = Bot(cfg.config)
+    bot = Bot()
     bot.start()
 

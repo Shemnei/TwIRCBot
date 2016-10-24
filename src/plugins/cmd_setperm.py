@@ -17,8 +17,8 @@ class IRCPlugin(master.CommandPlugin):
         return r"PRIVMSG #\w+ :!setperm \w+ \d+$"
 
     def cmd(self, message):
-        if message.user.name == self.config["connection"]["nick_name"].lower() \
-                or message.user.name == self.config["connection"]["channel"].lower():
+        if message.user.name == self.config.config["connection"]["nick_name"].lower() \
+                or message.user.name == self.config.config["connection"]["channel"].lower():
 
             args = message.msg[9:].split()
             logger.log(logging.DEBUG, "@%s -> setperm %s %s" % (str(message.user), args[0], args[1]))

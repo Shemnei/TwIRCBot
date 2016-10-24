@@ -135,9 +135,9 @@ class IRCPlugin(master.GenericPlugin):
 
     def on_load(self, bot):
         super().on_load(bot)
-        self.message_display_enabled = self.config["plugin_settings"]["enable_gui_messages"]
-        self.emote_display_enabled = self.config["plugin_settings"]["enable_gui_emotes"]
-        self.badge_display_enabled = self.config["plugin_settings"]["enable_gui_badges"]
+        self.message_display_enabled = self.config.config["plugin_settings"]["enable_gui_messages"]
+        self.emote_display_enabled = self.config.config["plugin_settings"]["enable_gui_emotes"]
+        self.badge_display_enabled = self.config.config["plugin_settings"]["enable_gui_badges"]
         self.nr_loaded_plugins = len(self.plugin_manager.get_loaded_plugins())
         gui_thread = threading.Thread(name="user_input_thread", target=self.open_gui)
         gui_thread.setDaemon(True)
@@ -182,7 +182,7 @@ class IRCPlugin(master.GenericPlugin):
         self.loaded_badges = self.loaded_static_badges.copy()
         try:
             data = urllib.request.urlopen(self.CHANNEL_BADGE_URL %
-                                          (channel, self.bot.get_config_manager()["connection"]["client_id"])).read()
+                                          (channel, self.config.config["connection"]["client_id"])).read()
             j_data = json.loads(data.decode())
 
             for k in j_data.keys():

@@ -19,8 +19,8 @@ class IRCPlugin(master.CommandPlugin):
 
     def cmd(self, message):
         if message.user.perm_lvl >= self.data_manager.PermissionLevel.moderator \
-                or message.user.name == self.config["connection"]["nick_name"].lower()\
-                or message.user.name == self.config["connection"]["channel"]:
+                or message.user.name == self.config.config["connection"]["nick_name"].lower()\
+                or message.user.name == self.config.config["connection"]["channel"]:
 
             args = message.msg[9:].split()
 

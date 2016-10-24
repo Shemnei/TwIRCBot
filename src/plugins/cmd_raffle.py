@@ -30,8 +30,8 @@ class IRCPlugin(master.CommandPlugin):
         args = message.msg[8:].split()
 
         if message.user.perm_lvl >= self.data_manager.PermissionLevel.moderator \
-                or message.user.name == self.config["connection"]["nick_name"].lower() \
-                or message.user.name == self.config["connection"]["channel"]:
+                or message.user.name == self.config.config["connection"]["nick_name"].lower() \
+                or message.user.name == self.config.config["connection"]["channel"]:
 
             if args[0] == "start":
 
@@ -94,7 +94,7 @@ class IRCPlugin(master.CommandPlugin):
         logger.log(logging.DEBUG, "@raffle -> raffle %i winner: %s" % (self.__id, winner))
         self.connection.add_chat_msg("The winner is %s. Congratulation!" % winner)
         self.connection.add_chat_msg(".w %s The winner of raffle #%i is %s." % (
-            self.config["connection"]["channel"], self.__id, winner))
+            self.config.config["connection"]["channel"], self.__id, winner))
 
     def __self_closing_routine(self, raffle_id, countdown):
         time.sleep(countdown)

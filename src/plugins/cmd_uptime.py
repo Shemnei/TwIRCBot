@@ -49,8 +49,7 @@ class IRCPlugin(master.CommandPlugin):
     def __get_stream_uptime(self):
         logger.log(logging.DEBUG, "@uptime -> fetching uptime[%s]" % self.__current_channel)
         data = urllib.request.urlopen(IRCPlugin.BASE_URL % (self.__current_channel,
-                                                            self.bot.get_config_manager()["connection"]["client_id"]))\
-            .read()
+                                                            self.config.config["connection"]["client_id"])).read()
         jo = json.loads(data.decode())
         if jo["stream"]:
             self.__current_stream_start = datetime.datetime.strptime(jo["stream"]["created_at"], "%Y-%m-%dT%H:%M:%SZ")

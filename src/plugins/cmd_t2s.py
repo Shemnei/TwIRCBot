@@ -41,7 +41,7 @@ class IRCPlugin(master.CommandPlugin):
 
     def on_load(self, bot):
         super().on_load(bot)
-        self.__lang = self.bot.get_config_manager()["plugin_settings"]["lang_t2s"] or "en"
+        self.__lang = self.config.config["plugin_settings"]["lang_t2s"] or "en"
 
     def on_close(self):
         super().on_close()

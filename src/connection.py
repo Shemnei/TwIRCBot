@@ -32,14 +32,14 @@ class IRCConnection:
 
         tmp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        if self.__config["connection"]["ssl"]:
+        if self.__config.config["connection"]["ssl"]:
             self.__irc_socket = ssl.wrap_socket(tmp)
         else:
             self.__irc_socket = tmp
 
-        self.__irc_socket.connect((self.__config["connection"]["server"], self.__config["connection"]["port"]))
-        logger.log(logging.INFO, "Connected to %s on %i" % (self.__config["connection"]["server"],
-                                                             self.__config["connection"]["port"]))
+        self.__irc_socket.connect((self.__config.config["connection"]["server"], self.__config.config["connection"]["port"]))
+        logger.log(logging.INFO, "Connected to %s on %i" % (self.__config.config["connection"]["server"],
+                                                             self.__config.config["connection"]["port"]))
         if not self.__send_thread.is_alive():
             self.__send_thread.start()
             logger.log(logging.DEBUG, "Send Thread started")
@@ -48,22 +48,22 @@ class IRCConnection:
             logger.log(logging.DEBUG, "Receive Thread started")
 
         req_str = ""
-        if self.__config["connection"]["membership_messages"]:
+        if self.__config.config["connection"]["membership_messages"]:
             req_str += "twitch.tv/membership "
-        if self.__config["connection"]["tags"]:
+        if self.__config.config["connection"]["tags"]:
             req_str += "twitch.tv/tags "
-        if self.__config["connection"]["commands"]:
+        if self.__config.config["connection"]["commands"]:
             req_str += "twitch.tv/commands"
 
-        oauth = self.__config["connection"]["oauth_token"]
+        oauth = self.__config.config["connection"]["oauth_token"]
         if not oauth.startswith("oauth:"):
             oauth = "oauth:" + oauth
 
         self.__send_queue.put("CAP REQ : %s" % req_str.rstrip())
         self.__send_queue.put('PASS %s' % oauth)
-        self.__send_queue.put('NICK %s' % self.__config["connection"]["nick_name"].lower())
+        self.__send_queue.put('NICK %s' % self.__config.config["connection"]["nick_name"].lower())
 
-        self.join_channel(self.__config["connection"]["channel"], reconnect=reconnect)
+        self.join_channel(self.__config.config["connection"]["channel"], reconnect=reconnect)
 
         logger.log(logging.DEBUG, "Connection established in %fms" % ((time.time() - start_connect)*1000))
 
@@ -72,8 +72,8 @@ class IRCConnection:
             try:
                 msg = self.__send_queue.get(timeout=5)
                 if msg:
-                    self.__irc_socket.send((msg + "\r\n").encode(self.__config["connection"]["msg_encoding"]))
-                    time.sleep(self.__config["connection"]["timeout_between_msg"])
+                    self.__irc_socket.send((msg + "\r\n").encode(self.__config.config["connection"]["msg_encoding"]))
+                    time.sleep(self.__config.config["connection"]["timeout_between_msg"])
             except queue.Empty:
                 pass
             except KeyboardInterrupt:
@@ -85,9 +85,9 @@ class IRCConnection:
         self.add_raw_msg(("PRIVMSG #%s :%s" % (self.__active_channel, msg)), important)
 
     def add_raw_msg(self, msg, important=False):
-        if important or not self.__config["general"]["silent_mode"]\
-                or (self.__config["general"]["only_silent_in_other_channels"]
-                    and self.__active_channel == self.__config["connection"]["channel"]):
+        if important or not self.__config.config["general"]["silent_mode"]\
+                or (self.__config.config["general"]["only_silent_in_other_channels"]
+                    and self.__active_channel == self.__config.config["connection"]["channel"]):
             self.__send_queue.put(msg)
 
     def __receive_routine(self):
@@ -95,8 +95,8 @@ class IRCConnection:
         while self.__running:
 
             try:
-                buffer = "".join((buffer, self.__irc_socket.recv(self.__config["connection"]["receive_size_bytes"])
-                                  .decode(self.__config["connection"]["msg_decoding"])))
+                buffer = "".join((buffer, self.__irc_socket.recv(self.__config.config["connection"]["receive_size_bytes"])
+                                  .decode(self.__config.config["connection"]["msg_decoding"])))
             except ConnectionAbortedError:
                 self.__handel_reconnect()
 
@@ -116,7 +116,7 @@ class IRCConnection:
                 self.__distribution_manager.add_line(line.rstrip())
 
     def __handel_reconnect(self):
-        if self.__config["connection"]["auto_reconnect"]:
+        if self.__config.config["connection"]["auto_reconnect"]:
             self.reconnect()
         else:
             logger.log(logging.INFO, "AUTO RECONNECT OFF - SHUTTING DOWN")
@@ -125,7 +125,7 @@ class IRCConnection:
 
     def add_received_msg(self, msg):
         full_msg = (":{0}!{0}@{0}.tmi.twitch.tv PRIVMSG #{1} :{2}"
-                    .format(self.__config["connection"]["nick_name"].lower(), self.__active_channel, msg))
+                    .format(self.__config.config["connection"]["nick_name"].lower(), self.__active_channel, msg))
         self.__distribution_manager.add_line(full_msg)
 
     def join_channel(self, channel, reconnect=False):
@@ -144,8 +144,8 @@ class IRCConnection:
 
         self.__plugin_manager.handle_channel_change(channel)
 
-        if self.__config["general"]["join_msg"] and not reconnect:
-            self.add_chat_msg(self.__config["general"]["join_msg"])
+        if self.__config.config["general"]["join_msg"] and not reconnect:
+            self.add_chat_msg(self.__config.config["general"]["join_msg"])
 
     def reconnect(self):
         logger.log(logging.INFO, "Disconnected -> Attempting to reconnect")
@@ -157,8 +157,8 @@ class IRCConnection:
 
     def close(self):
         logger.log(logging.INFO, "Connection closing")
-        if self.__config["general"]["depart_msg"]:
-            self.add_chat_msg(self.__config["general"]["depart_msg"])
+        if self.__config.config["general"]["depart_msg"]:
+            self.add_chat_msg(self.__config.config["general"]["depart_msg"])
         self.add_raw_msg("PART #%s" % self.__active_channel)
 
         self.__running = False
@@ -169,6 +169,7 @@ class IRCConnection:
 
         self.__irc_socket.close()
 
+    # FIXME change location
     class Color:
         RED = "\033[31m"
         BRIGHT_RED = "\033[31;1m"
