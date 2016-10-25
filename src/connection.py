@@ -59,7 +59,7 @@ class IRCConnection:
         if not oauth.startswith("oauth:"):
             oauth = "oauth:" + oauth
 
-        self.__send_queue.put("CAP REQ : %s" % req_str.rstrip())
+        self.__send_queue.put("CAP REQ :%s" % req_str.rstrip())
         self.__send_queue.put('PASS %s' % oauth)
         self.__send_queue.put('NICK %s' % self.__config.config["connection"]["nick_name"].lower())
 

@@ -18,7 +18,8 @@ logger = logging.getLogger(__name__)
 class IRCPlugin(master.GenericPlugin):
     EMOTE_URL = "http://static-cdn.jtvnw.net/emoticons/v1/%s/1.0"
     GENERIC_BADGE_URL = "http://badges.twitch.tv/v1/badges/global/display"
-    CHANNEL_BADGE_URL = "https://api.twitch.tv/kraken/chat/%s/badges?client_id=%s"
+    CHANNEL_PAGE_URL = "https://api.twitch.tv/kraken/channels/%s?client_id=%s"
+    CHANNEL_BADGE_URL = "https://badges.twitch.tv/v1/badges/channels/%s/display"
     CHEER_URL = "static-cdn.jtvnw.net/bits/light/static/%color/1"
     HISTORY_SIZE = 20
 
@@ -63,10 +64,7 @@ class IRCPlugin(master.GenericPlugin):
             if message.tags.get("badges", "") and self.badge_display_enabled:
                 badges = message.tags["badges"]
                 for badge in badges.split(","):
-                    if badge.startswith("bits"):
-                        message_parts.append("{badge}%s" % badge)
-                    else:
-                        message_parts.append("{badge}%s" % badge[:-2])
+                    message_parts.append("{badge}%s" % badge)
                 if len(message_parts) > 1:
                     message_parts.append(" ")
 
@@ -160,16 +158,12 @@ class IRCPlugin(master.GenericPlugin):
             j_data = json.loads(data.decode())
 
             for k in j_data["badge_sets"].keys():
-                for v in j_data["badge_sets"][k]["versions"]:
-                        url = j_data["badge_sets"][k]["versions"][v]["image_url_1x"]
+                for ver in j_data["badge_sets"][k]["versions"]:
+                        url = j_data["badge_sets"][k]["versions"][ver]["image_url_1x"]
                         data = urllib.request.urlopen(url).read()
                         stream = io.BytesIO(data)
-                        key = k
-                        if k == "mod":
-                            key = "moderator"
-                        if k == "bits":
-                            key += "/" + str(v)
-                        self.loaded_static_badges[key] = ImageTk.PhotoImage(Image.open(stream))
+                        key = k if k != "mod" else "moderator"
+                        self.loaded_static_badges[key + "/" + ver] = ImageTk.PhotoImage(Image.open(stream))
         except Exception as e:
             logger.exception("Static Badge loading")
 
@@ -181,18 +175,19 @@ class IRCPlugin(master.GenericPlugin):
 
         self.loaded_badges = self.loaded_static_badges.copy()
         try:
-            data = urllib.request.urlopen(self.CHANNEL_BADGE_URL %
-                                          (channel, self.config.config["connection"]["client_id"])).read()
+            channel_page = urllib.request.urlopen(self.CHANNEL_PAGE_URL %
+                                                  (channel, self.config.config["connection"]["client_id"])).read()
+            channel_id = json.loads(channel_page.decode())["_id"]
+
+            data = urllib.request.urlopen(self.CHANNEL_BADGE_URL % channel_id).read()
             j_data = json.loads(data.decode())
 
-            for k in j_data.keys():
-                if j_data[k] and "image" in j_data[k]:
-                    url = j_data[k]["image"]
+            for k in j_data["badge_sets"].keys():
+                for ver in j_data["badge_sets"][k]["versions"].keys():
+                    url = j_data["badge_sets"][k]["versions"][ver]["image_url_1x"]
                     data = urllib.request.urlopen(url).read()
                     stream = io.BytesIO(data)
-                    if k == "mod":
-                        k = "moderator"
-                    self.loaded_badges[k] = ImageTk.PhotoImage(Image.open(stream))
+                    self.loaded_badges[k + "/" + ver] = ImageTk.PhotoImage(Image.open(stream))
 
         except Exception as e:
             logger.exception("Badge loading")
