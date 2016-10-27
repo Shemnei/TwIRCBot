@@ -23,7 +23,6 @@ class IRCConnection:
         self.__plugin_manager = None
         self.__irc_socket = None
         self.__send_queue = queue.Queue()
-        self.__receive_queue = queue.Queue()
 
     def connect(self, reconnect=False):
         self.__running = True
@@ -98,7 +97,10 @@ class IRCConnection:
                 buffer = "".join((buffer, self.__irc_socket.recv(self.__config.config["connection"]["receive_size_bytes"])
                                   .decode(self.__config.config["connection"]["msg_decoding"])))
             except ConnectionAbortedError:
-                self.__handel_reconnect()
+                if self.__running:
+                    self.__handel_reconnect()
+                else:
+                    return
 
             if len(buffer) == 0:
                 logger.log(logging.WARNING, "CONNECTION LOST")
@@ -134,8 +136,6 @@ class IRCConnection:
             self.add_raw_msg("PART #%s" % self.__active_channel, important=True)
             logger.log(logging.INFO, "Left %s" % self.__active_channel)
             self.__active_channel = None
-            with self.__receive_queue.mutex:
-                self.__receive_queue.queue.clear()
             logger.log(logging.DEBUG, "Cleared receive queue")
 
         self.add_raw_msg('JOIN #%s' % channel,  important=True)
@@ -162,12 +162,15 @@ class IRCConnection:
         self.add_raw_msg("PART #%s" % self.__active_channel)
 
         self.__running = False
-        self.__receive_thread.join()
-        logger.log(logging.DEBUG, "Receive Thread stopped")
-        self.__send_thread.join()
-        logger.log(logging.DEBUG, "Send Thread stopped")
-
+        logger.log(logging.DEBUG, "Waiting for termination")
+        if self.__send_thread and self.__send_thread.is_alive():
+            self.__send_thread.join()
+        self.__irc_socket.shutdown(socket.SHUT_RD)
         self.__irc_socket.close()
+        logger.log(logging.DEBUG, "Send Thread -> Closed")
+        if self.__receive_thread and self.__receive_thread.is_alive():
+            self.__receive_thread.join()
+            logger.log(logging.DEBUG, "Receive Thread -> Closed")
 
     # FIXME change location
     class Color:
