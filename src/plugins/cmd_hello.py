@@ -13,7 +13,7 @@ class IRCPlugin(master.CommandPlugin):
     PERMISSION_LEVEL = 0
     ADD_TO_HELP = True
 
-    COOL_DOWN = 10
+    COOL_DOWN = 0
     IS_COOL_DOWN_GLOBAL = True
 
     def get_regex(self):

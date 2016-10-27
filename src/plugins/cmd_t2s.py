@@ -17,6 +17,7 @@ class IRCPlugin(master.CommandPlugin):
     PERMISSION_LEVEL = 2
     ADD_TO_HELP = True
 
+    CURRENCY_COST = 5
     COOL_DOWN = 30
 
     def __init__(self):

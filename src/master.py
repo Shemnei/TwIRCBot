@@ -85,24 +85,29 @@ class CommandPlugin(Plugin):
         self.__last_global_call = None
 
     def is_valid_request(self, user):
-        if self.IS_COOL_DOWN_GLOBAL:
+        if user.name == self.config.config["connection"]["nick_name"].lower()\
+                or user.name == self.config.config["connection"]["channel"].lower():
+            return True
 
-            valid = False
-            if user.name == self.config.config["connection"]["nick_name"].lower() \
-                    or user.name == self.config.config["connection"]["channel"].lower() \
-                    or not self.__last_global_call \
+        user_cur = self.data_manager.get_user_currency(user.name)
+        if user_cur < self.CURRENCY_COST:
+            self.connection.add_chat_msg("%s, you don't have enough currency. Check with !status." % user.name)
+            return False
+
+        if self.IS_COOL_DOWN_GLOBAL:
+            if not self.__last_global_call \
                     or ((time.time() - self.__last_global_call >= self.COOL_DOWN
                          and user.perm_lvl >= self.PERMISSION_LEVEL)):
-                valid = True
                 self.__last_global_call = time.time()
-            return valid
+                self.data_manager.set_user_currency(user.name, user_cur - self.CURRENCY_COST)
+                return True
+            return False
 
         else:
             user_last_call = self.__user_calls.get(user.name, 0)
-            if user.name == self.config.config["connection"]["nick_name"].lower() \
-                    or user.name == self.config.config["connection"]["channel"].lower() \
-                    or (time.time() - user_last_call >= self.COOL_DOWN and user.perm_lvl >= self.PERMISSION_LEVEL):
+            if time.time() - user_last_call >= self.COOL_DOWN and user.perm_lvl >= self.PERMISSION_LEVEL:
                 self.__user_calls[user.name] = time.time()
+                self.data_manager.set_user_currency(user.name, user_cur - self.CURRENCY_COST)
                 return True
             return False
 

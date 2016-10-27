@@ -8,7 +8,6 @@ class IRCPlugin(master.GenericPlugin):
     def get_regex(self):
         return r"$"
 
-    # TODO: maybe support for notice
     # TODO REWORK WITH NEW MESSAGE
     def cmd(self, message):
         line = message.raw_line
