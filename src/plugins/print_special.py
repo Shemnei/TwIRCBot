@@ -109,5 +109,5 @@ class IRCPlugin(master.GenericPlugin):
             return
 
     def print_tm(self, msg):
-        print("[" + datetime.datetime.now().strftime("%H:%M:%S") + "] " + self.connection.Color.BRIGHT_WHITE + msg
-              + self.connection.Color.RESET)
+        print("[" + datetime.datetime.now().strftime("%H:%M:%S") + "] " + self.bot.Color.BRIGHT_WHITE + msg
+              + self.bot.Color.RESET)
